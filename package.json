@@ -1,7 +1,7 @@
 {
-  "name": "assessment-for-sprint-13-api-documentation-airbnb",
+  "name": "gaming-mea",
   "version": "1.0.0",
-  "description": "![Database Schema](./images/airbnb-schema.png)",
+  "description": "![Database Schema](./images)",
   "main": "index.js",
   "directories": {
     "test": "test"

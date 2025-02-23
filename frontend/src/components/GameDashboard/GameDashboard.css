@@ -1,0 +1,30 @@
+/* GameDashboard.css */
+
+.game-dashboard {
+    max-width: 800px;
+    margin: auto;
+    padding: 1.5rem;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .stats-section, .inventory-section {
+    margin-top: 1.5rem;
+  }
+  
+  .stats-section h2, .inventory-section h2 {
+    color: #333;
+  }
+  
+  .stats-section ul, .inventory-section ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .stats-section li, .inventory-section li {
+    font-size: 1.2rem;
+    margin: 5px 0;
+  }
+  

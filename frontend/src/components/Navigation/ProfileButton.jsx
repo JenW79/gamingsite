@@ -60,8 +60,11 @@ function ProfileButton({ user }) {
               <li> Hello, {user.username || "Guest"}</li>
               <li>{user.email || "No Email"}</li>
               <hr className="solid" />
-              <NavLink to="/spots/current">
-              <li className="manage-spots">Manage Spots</li>
+              <NavLink to={`/profiles/${user.id}`}>
+              <li className="manage-spots">View Profile</li>
+              </NavLink>
+              <NavLink to="/dashboard">
+              <li className="manage-spots">Game Dashboard</li>
               </NavLink>
               <hr className="solid" />
               <li>

@@ -1,6 +1,4 @@
 'use strict';
-
-
 const { Model, Validator } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
@@ -49,6 +47,27 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      // Game-specific profile fields:
+      level: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 1,
+      },
+      experience: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      energy: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 100,
+      },
+      cash: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0.00,
+      },
     },
     {
       sequelize,
@@ -59,6 +78,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       schema: process.env.NODE_ENV === 'production' ? process.env.SCHEMA : undefined,
-    });
+    }
+  );
   return User;
 };

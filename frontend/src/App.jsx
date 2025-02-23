@@ -3,10 +3,12 @@ import { useDispatch } from 'react-redux';
 import { Outlet, createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Navigation from './components/Navigation/Navigation';
 import * as sessionActions from './store/session';
-import ManageSpotsPage from './components/ManageSpotsPage/ManageSpotsPage'
 import LandingPage from "./components/LandingPage/LandingPage";
-import SpotDetailsPage from "./components/SpotDetailsPage/SpotDetailsPage";
-import CreateSpotForm from "./components/CreateSpotForm/CreateSpotForm";
+import ProfilesPage from "./components/ProfilesPage/ProfilesPage";
+import ProfileDetailPage from './components/ProfilesDetailsPage/ProfilesDetailsPage';
+import GameDashboard from "./components/GameDashboard/GameDashboard";
+import ProfileEditPage from "./components/ProfileEditPage/ProfileEditPage";
+
 
 
 function Layout() {
@@ -34,14 +36,15 @@ const router = createBrowserRouter([
       { path: '/', 
         element: <LandingPage /> 
       },
-      { path: '/spots/current', 
-        element: <ManageSpotsPage /> },
-      { path: "/spots/:spotId", 
-        element: <SpotDetailsPage /> },
-        {path:"/spots/new",
-          element: <CreateSpotForm />},
-          {path: "/spots/:spotId/edit",
-            element: <CreateSpotForm />},
+      { path: '/profiles', 
+        element: <ProfilesPage /> 
+      },
+      { path: '/profiles/:userId', 
+        element: <ProfileDetailPage /> },
+      { path: "/dashboard", 
+        element: <GameDashboard /> },
+      {path: "/profiles/edit", 
+        element: <ProfileEditPage /> }
     ],
   },
 ]);

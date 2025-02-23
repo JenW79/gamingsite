@@ -1,0 +1,51 @@
+/* Leaderboard.css */
+
+.leaderboard-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 1rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .leaderboard-container h2 {
+    text-align: center;
+    color: #333;
+  }
+  
+  .leaderboard-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .leaderboard-item:last-child {
+    border-bottom: none;
+  }
+  
+  .leaderboard-rank {
+    font-weight: bold;
+    width: 30px;
+  }
+  
+  .leaderboard-username {
+    flex: 1;
+    margin-left: 1rem;
+    color: #007bff;
+  }
+  
+  .leaderboard-level,
+  .leaderboard-xp {
+    font-size: 0.9rem;
+    color: #555;
+  }
+  

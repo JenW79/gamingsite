@@ -1,0 +1,53 @@
+/* ProfileEditPage.css */
+
+.profile-edit-container {
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .profile-edit-container h2 {
+    color: #333;
+  }
+  
+  .profile-edit-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .profile-edit-container label {
+    font-weight: bold;
+    text-align: left;
+  }
+  
+  .profile-edit-container input {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .profile-edit-container button {
+    padding: 10px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .profile-edit-container button:hover {
+    background-color: #0056b3;
+  }
+  
+  .success-message {
+    color: green;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  
