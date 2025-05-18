@@ -1,5 +1,5 @@
 // store/profiles.js
-
+import { csrfFetch } from "./csrf";
 // Action Type
 const SET_PROFILES = 'profiles/SET_PROFILES';
 const UPDATE_PROFILE = "profiles/UPDATE_PROFILE";
@@ -28,7 +28,7 @@ export const fetchProfiles = () => async (dispatch) => {
 
 //  Thunk for updating profile 
 export const editProfile = (profileData) => async (dispatch) => {
-  const res = await fetch("/api/profiles/profile", {
+  const res = await csrfFetch("/api/profiles/profile", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(profileData),

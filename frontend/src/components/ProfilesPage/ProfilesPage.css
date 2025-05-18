@@ -1,52 +1,80 @@
+/* Container Grid */
 .profiles-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); /* Responsive grid */
-    gap: 20px;
-    padding: 20px;
-  }
-  
-  .profile-card {
-    display: flex;
-    flex-direction: column;
-    background: #fff;
-    border-radius: 10px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: transform 0.2s ease-in-out;
-    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .profile-card:hover {
-    transform: scale(1.05); /* Hover effect */
-  }
-  
-  .profile-image-container {
-    width: 100%;
-    height: 250px; /* Adjust height for profile images as needed */
-    overflow: hidden;
-  }
-  
-  .profile-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  .profile-info-container {
-    padding: 10px;
-    text-align: center; /* Center profile info */
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-  
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 20px;
+  padding: 2rem;
+  background-color: #1e1e1e;
+  box-sizing: border-box;
+}
+
+/* Card */
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  background-color: #2b2b2b;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.profile-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 18px rgba(255, 76, 104, 0.4);
+}
+
+/* Image */
+.profile-image-container {
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+  border-bottom: 2px solid #ff4c68;
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Info */
+.profile-info-container {
+  padding: 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: #f1f1f1;
+  background-color: #2b2b2b;
+}
+
+.profile-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ff4c68;
+  margin-bottom: 0.5rem;
+}
+
+.profile-stats {
+  font-size: 0.95rem;
+  color: #ccc;
+}
+
+.profile-image-container {
+  border-bottom: none;
+  border-top: 4px solid #ff4c68;
+  box-shadow: inset 0 -4px 8px rgba(255, 76, 104, 0.4);
+}
+
+/* Responsive text */
+@media (max-width: 480px) {
   .profile-name {
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 1rem;
   }
-  
+
   .profile-stats {
-    font-size: 16px;
-    color: #010101;
+    font-size: 0.85rem;
   }
-  
+}

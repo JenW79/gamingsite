@@ -8,6 +8,9 @@ import ProfilesPage from "./components/ProfilesPage/ProfilesPage";
 import ProfileDetailPage from './components/ProfilesDetailsPage/ProfilesDetailsPage';
 import GameDashboard from "./components/GameDashboard/GameDashboard";
 import ProfileEditPage from "./components/ProfileEditPage/ProfileEditPage";
+import CombatPage from "./components/CombatPage/CombatPage";
+import ChatPage from './components/ChatPage/ChatPage';
+import StorePage from './components/StorePage/StorePage';
 
 
 
@@ -44,7 +47,14 @@ const router = createBrowserRouter([
       { path: "/dashboard", 
         element: <GameDashboard /> },
       {path: "/profiles/edit", 
-        element: <ProfileEditPage /> }
+        element: <ProfileEditPage /> },
+      { path: "/combat", 
+        element: <CombatPage /> },
+      {path: "/chat",
+        element: <ChatPage /> },
+      {path: "store",
+        element: <StorePage /> },
+      
     ],
   },
 ]);

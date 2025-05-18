@@ -1,0 +1,103 @@
+/* Store Container */
+.store-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #2b2b2b;
+  color: #f1f1f1;
+  border-radius: 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Heading */
+.store-container h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 3px solid #ff4c68;
+  display: inline-block;
+  padding-bottom: 0.5rem;
+  color: #ff4c68;
+}
+
+/* Message */
+.store-container p {
+  font-size: 1rem;
+  color: #ef8172;
+  margin-top: 0.5rem;
+  font-weight: bold;
+}
+
+/* List */
+.store-container ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Item Card */
+.store-container li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e1e1e;
+  padding: 1rem 1.25rem;
+  margin: 0.75rem 0;
+  border-radius: 10px;
+  transition: transform 0.2s ease-in-out;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+}
+
+.store-container li:hover {
+  transform: scale(1.03);
+}
+
+/* Item Text */
+.store-container li span {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #f1f1f1;
+}
+
+/* Buy Button */
+.store-container button {
+  background-color: #ff4c68;
+  color: white;
+  font-weight: bold;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px #000;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.store-container button:hover {
+  background-color: #ef8172;
+  transform: scale(1.05);
+}
+
+.item-name {
+  font-weight: bold;
+  color: #fff;
+}
+
+.item-price {
+  margin-left: 1rem;
+  color: #ccc;
+}
+
+/* Mobile Stack */
+@media (max-width: 500px) {
+  .store-container li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .store-container button {
+    align-self: flex-end;
+  }
+}

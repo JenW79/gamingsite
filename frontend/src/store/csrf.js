@@ -1,36 +1,36 @@
-// frontend/src/store/csrf.js
-
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
 
 export async function csrfFetch(url, options = {}) {
-  // set options.method to 'GET' if there is no method
-  options.method = options.method || 'GET';
-  // set options.headers to an empty object if there is no headers
+  options.method = options.method || "GET";
   options.headers = options.headers || {};
-  options.credentials = "include";
+  options.credentials = "include"; // Ensure cookies are included
 
-  // if the options.method is not 'GET', then set the "Content-Type" header to
-  // "application/json", and set the "XSRF-TOKEN" header to the value of the
-  // "XSRF-TOKEN" cookie
-  if (options.method.toUpperCase() !== 'GET') {
-    options.headers['Content-Type'] = 'application/json';
-    options.headers['XSRF-Token'] = Cookies.get('XSRF-TOKEN');
+  let token = Cookies.get("XSRF-TOKEN");
+  if (!token) {
+    const data = await restoreCSRF();
+    token = data.csrfToken;
   }
-  // call the default window's fetch with the url and the options passed in
-  const res = await window.fetch(url, options);
-  
 
+  options.headers["Content-Type"] = "application/json";
+  options.headers["XSRF-Token"] = token;
+  const res = await fetch(url, options);
 
-  // if the response status code is 400 or above, then throw an error with the
-  // error being the response
   if (res.status >= 400) throw res;
-
-  // if the response status code is under 400, then return the response to the
-  // next promise chain
   return res;
 }
 
-// This is needed in development mode to ensure the CSRF token is set.
-export function restoreCSRF() { 
-  return csrfFetch('/api/csrf/restore'); 
+//  Fetch CSRF token when app loads
+export async function restoreCSRF() {
+  const res = await fetch("/api/csrf/restore", {
+    method: "GET",
+    credentials: "include",
+  });
+
+  if (res.ok) {
+    const data = await res.json();
+    Cookies.set("XSRF-TOKEN", data.csrfToken); //  Store the token in cookies
+    return data;
+  } else {
+    throw new Error("Failed to restore CSRF token");
+  }
 }

@@ -1,17 +1,19 @@
 'use strict';
 
-const { User } = require('../models');
 const bcrypt = require("bcryptjs");
 
-let options = {};
-if (process.env.NODE_ENV === 'production') {
-  options.schema = process.env.SCHEMA;  
-}
 
+/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    options.tableName = 'Users'; // Target the correct table
-    await queryInterface.bulkInsert(
+    const options = {
+      tableName: 'Users'
+    };
+    if (process.env.NODE_ENV === 'production') {
+      options.schema = process.env.SCHEMA;
+    }
+
+    return queryInterface.bulkInsert(
       options,
       [
         {
@@ -47,7 +49,13 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    options.tableName = 'Users'; // Target the correct table
+    const options = {
+      tableName: 'Users'
+    };
+    if (process.env.NODE_ENV === 'production') {
+      options.schema = process.env.SCHEMA;
+    }
+
     const Op = Sequelize.Op;
     return queryInterface.bulkDelete(
       options,
@@ -56,5 +64,5 @@ module.exports = {
       },
       {}
     );
-  }
+  },
 };

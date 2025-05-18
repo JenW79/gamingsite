@@ -30,7 +30,11 @@ function ProfileDetailPage() {
       <div className="profile-header">
         <div className="profile-image-container">
           <img
-            src={profile.avatarUrl || "/placeholder-avatar.png"} 
+            src={
+              profile.avatarUrl?.startsWith("http")
+                ? profile.avatarUrl
+                : "/placeholder-avatar.png"
+            }
             alt={`${profile.username}'s profile`}
             className="profile-image"
           />
@@ -41,7 +45,9 @@ function ProfileDetailPage() {
           <p>Location: {profile.location || "Not specified"}</p>
           <p>Age: {profile.age || "Not specified"}</p>
           <p>Sex: {profile.sex || "Not specified"}</p>
-          <p>Relationship Status: {profile.relationshipStatus || "Not specified"}</p>
+          <p>
+            Relationship Status: {profile.relationshipStatus || "Not specified"}
+          </p>
         </div>
       </div>
 
@@ -56,4 +62,3 @@ function ProfileDetailPage() {
 }
 
 export default ProfileDetailPage;
-

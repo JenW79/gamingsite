@@ -1,55 +1,82 @@
 /* Login Modal Container */
 .login-form-container {
-    width: 350px;
-    padding: 20px;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-    text-align: center;
+  width: 90%;
+  max-width: 360px;
+  margin: auto;
+  padding: 24px;
+  background-color: #2b2b2b;
+  border-radius: 12px;
+  text-align: center;
+  color: #f1f1f1;
+}
+
+/* Headline */
+.login-form-container h1 {
+  margin-bottom: 20px;
+  color: #ff4c68;
+  font-size: 1.8rem;
 }
 
 /* Form Inputs */
 .login-form input {
-    width: 95%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 3px solid #000;
-    border-radius: 5px;
-    font-size: 14px;
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 2px solid #444;
+  border-radius: 6px;
+  font-size: 15px;
+  background-color: #1e1e1e;
+  color: #f1f1f1;
+  box-sizing: border-box;
 }
 
-/* Login Button (Specific to LoginFormModal) */
+.login-form input::placeholder {
+  color: #999;
+}
+
+/* Error Message */
+.error-message {
+  color: #ff6b6b;
+  margin-top: -6px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+/* Login Button */
 .login-button {
-    width: 100%;
-    padding: 10px;
-    background-color: #ea2121;  
-    color: white;
-    border: 3px solid #000;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    box-shadow: 7px 4px 0px 0px rgb(0, 0, 0);
+  width: 100%;
+  padding: 12px;
+  background-color: #ff4c68;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  box-shadow: 5px 5px 0px #000;
+  transition: background-color 0.3s ease;
 }
 
-/* Active Login Button */
 .login-button:not(.disabled-login):hover {
-    background-color: #db3232;
+  background-color: #ef8172;
 }
 
-/* Disabled Login Button */
+/* Disabled State */
 .disabled-login {
-    background-color: lightgray !important;
-    cursor: not-allowed;
+  background-color: #555 !important;
+  color: #999;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* Demo User Link */
 .demo-user-text {
-    margin-top: 10px;
-    color: #007bff;
-    cursor: pointer;
-    text-decoration: underline;
+  margin-top: 16px;
+  color: #66aaff;
+  cursor: pointer;
+  font-size: 0.95rem;
+  text-decoration: underline;
 }
 
-/* .demo-user-text:hover {
-    text-decoration: underline;
-} */
+.demo-user-text:hover {
+  color: #aac8ff;
+}

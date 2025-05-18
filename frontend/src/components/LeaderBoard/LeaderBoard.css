@@ -1,51 +1,102 @@
-/* Leaderboard.css */
-
 .leaderboard-container {
-    max-width: 600px;
-    margin: 2rem auto;
-    padding: 1rem;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .leaderboard-container h2 {
-    text-align: center;
-    color: #333;
-  }
-  
-  .leaderboard-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
+  max-width: 700px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #2b2b2b;
+  border-radius: 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
+  color: #f1f1f1;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Title */
+.leaderboard-container h2 {
+  text-align: center;
+  color: #ff4c68;
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+}
+
+/* List Wrapper */
+.leaderboard-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Each Player Row */
+.leaderboard-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background-color: #1e1e1e;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: background 0.3s ease;
+}
+
+.leaderboard-item:hover {
+  background-color: #333;
+}
+
+/* Rank */
+.leaderboard-rank {
+  font-weight: bold;
+  font-size: 1rem;
+  width: 30px;
+  text-align: center;
+  color: #ef8172;
+}
+
+/* Top 3 Ranks Special Color */
+.leaderboard-item:nth-child(1) .leaderboard-rank {
+  color: gold;
+  text-shadow: 0 0 5px gold;
+}
+
+.leaderboard-item:nth-child(2) .leaderboard-rank {
+  color: silver;
+  text-shadow: 0 0 5px silver;
+}
+
+.leaderboard-item:nth-child(3) .leaderboard-rank {
+  color: #cd7f32;
+  text-shadow: 0 0 5px #cd7f32;
+}
+
+/* Username */
+.leaderboard-username {
+  flex: 1;
+  margin-left: 1rem;
+  font-size: 1.05rem;
+  color: #f1f1f1;
+  font-weight: 500;
+}
+
+/* Stats */
+.leaderboard-level,
+.leaderboard-xp {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-left: 1rem;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 500px) {
   .leaderboard-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    border-bottom: 1px solid #eee;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
   }
-  
-  .leaderboard-item:last-child {
-    border-bottom: none;
-  }
-  
+
   .leaderboard-rank {
-    font-weight: bold;
-    width: 30px;
+    width: auto;
+    margin-bottom: 0.25rem;
   }
-  
+
   .leaderboard-username {
-    flex: 1;
-    margin-left: 1rem;
-    color: #007bff;
+    margin-left: 0;
   }
-  
-  .leaderboard-level,
-  .leaderboard-xp {
-    font-size: 0.9rem;
-    color: #555;
-  }
-  
+}

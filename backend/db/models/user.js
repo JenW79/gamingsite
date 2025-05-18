@@ -1,5 +1,5 @@
-'use strict';
-const { Model, Validator } = require('sequelize');
+"use strict";
+const { Model, Validator } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
           len: [4, 30],
           isNotEmail(value) {
             if (Validator.isEmail(value)) {
-              throw new Error('Cannot be an email.');
+              throw new Error("Cannot be an email.");
             }
           },
         },
@@ -63,21 +63,46 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: 100,
       },
+      health: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 100 },
+      attack: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 10 },
+      defense: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 5 },
+
       cash: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
-        defaultValue: 0.00,
+        defaultValue: 0.0,
+      },
+      avatarUrl: {
+        type: DataTypes.STRING,
+        allowNull: true, // Allow profile pictures
+      },
+      location: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      age: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      sex: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      relationshipStatus: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
     },
     {
       sequelize,
-      modelName: 'User',
+      modelName: "User",
       defaultScope: {
         attributes: {
-          exclude: ['hashedPassword', 'email', 'createdAt', 'updatedAt'],
+          exclude: ["hashedPassword", "email", "createdAt", "updatedAt"],
         },
       },
-      schema: process.env.NODE_ENV === 'production' ? process.env.SCHEMA : undefined,
+      schema:
+        process.env.NODE_ENV === "production" ? process.env.SCHEMA : undefined,
     }
   );
   return User;

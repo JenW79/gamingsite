@@ -1,52 +1,59 @@
 'use strict';
 
-/** @type {import('sequelize-cli').Migration} */
+const { User } = require('../models');
+
 module.exports = {
-  async up (queryInterface, Sequelize) {
-    /**
-     * Add seed commands here.
-     *
-     * Example:
-     * await queryInterface.bulkInsert('People', [{
-     *   name: 'John Doe',
-     *   isBetaMember: false
-     * }], {});
-    */
-    return queryInterface.bulkInsert('Inventories', [
-      {
-        userId: 1,
-        name: 'Iron Sword',
-        type: 'weapon',
-        quantity: 1,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        userId: 1,
-        name: 'Health Potion',
-        type: 'potion',
-        quantity: 3,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        userId: 2,
-        name: 'Steel Shield',
-        type: 'armor',
-        quantity: 1,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ]);
+  async up(queryInterface, Sequelize) {
+    const options = { tableName: 'Inventories' };
+    if (process.env.NODE_ENV === 'production') {
+      options.schema = process.env.SCHEMA;
+    }
+
+    const demoUser = await User.findOne({ where: { username: 'Demo-lition' } });
+    const user2 = await User.findOne({ where: { username: 'FakeUser2' } });
+
+    if (!demoUser || !user2) {
+      throw new Error("Required users not found. Seed users before inventories.");
+    }
+
+    return queryInterface.bulkInsert(
+      options,
+      [
+        {
+          userId: demoUser.id,
+          name: 'Iron Sword',
+          type: 'weapon',
+          quantity: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          userId: demoUser.id,
+          name: 'Health Potion',
+          type: 'potion',
+          quantity: 3,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          userId: user2.id,
+          name: 'Steel Shield',
+          type: 'armor',
+          quantity: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
+      {}
+    );
   },
 
-  async down (queryInterface, Sequelize) {
-    /**
-     * Add commands to revert seed here.
-     *
-     * Example:
-     * await queryInterface.bulkDelete('People', null, {});
-     */
-    return queryInterface.bulkDelete('Inventories', null, {});
-  }
+  async down(queryInterface, Sequelize) {
+    const options = { tableName: 'Inventories' };
+    if (process.env.NODE_ENV === 'production') {
+      options.schema = process.env.SCHEMA;
+    }
+
+    return queryInterface.bulkDelete(options, null, {});
+  },
 };

@@ -1,20 +1,25 @@
+/* Nav Container */
 .navbar {
-  background-color: white;
-  padding: 10px 20px;
   display: flex;
-  justify-content: space-between; 
+  justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #ddd;
-  max-width: 100%;
+  background-color: #1e1e1e;
+  padding: 10px 20px;
+  border-bottom: 1px solid #333;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  position: relative;
   width: 100%;
+  z-index: 100;
 }
+
+/* Logo */
 .logo {
   height: auto;
-  max-height: 50px;
-  width: auto;
+  max-height: 40px;
   cursor: pointer;
 }
 
+/* Nav List */
 .navbar ul {
   list-style: none;
   display: flex;
@@ -24,138 +29,112 @@
   padding: 0;
 }
 
+/* List Items */
 .navbar li {
   display: flex;
   align-items: center;
 }
 
-.profile-container {
+.profile-button-wrapper {
+  margin-left: auto;
+  margin-right: 10px; 
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 25px; 
-  padding: 5px 12px; 
-  cursor: pointer;
-  height: 35px; 
-  position: relative;
-  margin-right: 20px; 
+  justify-content: flex-end;
 }
 
-/* Profile Button (Button itself) */
-.profile-icon {
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  gap: 3px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 5px 8px;
+
+.profile-toggle-button:hover {
+  background-color: #3a3a3a;
 }
 
-/* Adjust individual icon spacing */
-.menu-icon {
-  font-size: 18px;
-  color: black;
-  margin-left: 5px;
+.menu-icon,
+.user-icon {
+  font-size: 20px;
+  color: #ff4c68;
 }
-
-.profile-icon svg { /* Ensures both icons align correctly */
-  font-size: 18px;
-  color: black;
-}
-
 
 /* Dropdown Menu */
 .profile-dropdown {
   position: absolute;
-  top: 45px;
+  top: 50px;
   right: 0;
-  background: white;
-  border: 2px solid black;
-  list-style: none;
-  padding: 10px;
-  border-radius: 10px;
+  background-color: #2b2b2b;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
+  width: 200px;
   display: flex;
   flex-direction: column;
-  min-width: 180px;
-  font-size: 14px;
-  text-align: left;
+  gap: 0.5rem;
+  z-index: 999;
 }
 
 .profile-dropdown li {
-  padding: 8px 12px;
+  list-style: none;
+  font-size: 0.95rem;
+  color: #f1f1f1;
+  padding: 6px 0;
   cursor: pointer;
-  text-align: left;
-  font-size: 14px;
-  font-weight: normal;
 }
 
 .profile-dropdown li:hover {
-  background-color: #f2f2f2;
+  background-color: #3a3a3a;
+  border-radius: 6px;
 }
 
-.profile-dropdown li:first-child {
+/* Special Link Styling */
+.dropdown-link {
   font-weight: bold;
+  color: #ef8172;
+  cursor: pointer;
 }
 
-.profile-dropdown li.manage-spots {
-  font-weight: bold;
-  padding-top: 5px;
-}
-
-/* Manage Spots Link */
-.manage-spots {
-  font-weight: bold;
-  padding-top: 5px;
-  color: black;
-}
-
-
-.manage-spots:hover {
+.dropdown-link:hover {
   text-decoration: underline;
 }
 
-/* Logout Button */
-.logout-button {
-  background-color: #444;
-  color: white;
-  padding: 10px 20px;
+/* Divider */
+.dropdown-divider {
   border: none;
-  border-radius: 50px;
-  cursor: pointer;
+  border-top: 1px solid #444;
+  margin: 0.5rem 0;
+}
+
+/* Logout */
+.logout-button {
+  background-color: #ff4c68;
+  color: white;
+  padding: 10px;
   width: 100%;
-  text-align: center;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px #000;
+  transition: background-color 0.3s ease;
 }
 
 .logout-button:hover {
-  background-color: darkgrey;
+  background-color: #ef8172;
 }
 
+/* Hide class */
 .hidden {
   display: none;
 }
 
-/* Create a New Spot Link */
-.create-spot-link {
-  position: absolute;
-  right: 150px;  
-  font-weight: bold;
-  color: rgb(59, 79, 59);
-  text-decoration: none;
-}
+/* Responsive Fix */
+@media (max-width: 600px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
-.create-spot-link:hover {
-  text-decoration: underline;
-  background-color: #f2f2f2;
-}
-
-.profile-dropdown hr {
-  border: none; 
-  border-top: 1px solid black;  
-  margin: 8px 0; 
-  width: 100%; 
-  list-style: none;  
+  .profile-button-wrapper {
+    width: 100%;
+    justify-content: flex-start;
+    margin-top: 10px;
+  }
 }

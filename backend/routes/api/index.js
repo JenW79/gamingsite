@@ -5,6 +5,9 @@ const usersRouter = require('./users.js');
 const profilesRouter = require('./profiles.js');
 const leaderboardRouter = require('./leaderboard');
 const gameRouter = require('./game');
+const combatRouter = require("./combat.js");
+const inventoryRouter = require("./inventory.js");
+const storeRouter = require("./store.js");
 
 const { restoreUser } = require("../../utils/auth.js");
 
@@ -22,6 +25,12 @@ router.use('/profiles', profilesRouter);
 router.use('/leaderboard', leaderboardRouter);
 
 router.use('/game', gameRouter);
+
+router.use("/combat", combatRouter); 
+
+router.use("/inventory", inventoryRouter); 
+
+router.use("/store", storeRouter); 
 
 router.post('/test', (req, res) => {
   res.json({ requestBody: req.body });

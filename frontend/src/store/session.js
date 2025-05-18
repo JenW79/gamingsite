@@ -1,4 +1,4 @@
-import { csrfFetch } from './csrf';
+import { csrfFetch, restoreCSRF } from './csrf';
 
 // Action Types
 const SET_USER = "session/setUser";
@@ -16,6 +16,7 @@ const removeUser = () => ({
 
 //Thunk Sign up a user
 export const signup = (user) => async (dispatch) => {
+  await restoreCSRF(); 
   const { 
     username, firstName, lastName, email, password 
   } = user;
@@ -42,6 +43,7 @@ export const signup = (user) => async (dispatch) => {
 
 // Thunk Log in a User
 export const login = (user) => async (dispatch) => {
+  await restoreCSRF();
   const { credential, password } = user;
   const response = await csrfFetch("/api/session", {
     method: "POST",
@@ -71,6 +73,7 @@ export const logout = () => async (dispatch) => {
 
 //Restore a user
 export const restoreUser = () => async (dispatch) => {
+  await restoreCSRF();
   const response = await csrfFetch("/api/session");
   const data = await response.json();
   dispatch(setUser(data.user));
