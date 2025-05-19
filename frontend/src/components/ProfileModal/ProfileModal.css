@@ -1,0 +1,47 @@
+.profile-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.profile-modal {
+  background: #2b2b2b;
+  padding: 2rem;
+  border-radius: 10px;
+  color: #f1f1f1;
+  max-width: 300px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 0 15px rgba(255, 76, 104, 0.6);
+}
+
+.profile-modal-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.close-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #ff4c68;
+  cursor: pointer;
+}
+
+.profile-modal-avatar svg {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+}

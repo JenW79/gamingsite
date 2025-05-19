@@ -2,6 +2,7 @@
 import { useParams, NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { FaUserCircle } from "react-icons/fa";
 import "./ProfileDetailsPage.css";
 
 function ProfileDetailPage() {
@@ -29,15 +30,18 @@ function ProfileDetailPage() {
     <div className="profile-details-container">
       <div className="profile-header">
         <div className="profile-image-container">
-          <img
-            src={
-              profile.avatarUrl?.startsWith("http")
-                ? profile.avatarUrl
-                : "/placeholder-avatar.png"
-            }
-            alt={`${profile.username}'s profile`}
-            className="profile-image"
-          />
+          {profile.avatarUrl && profile.avatarUrl.startsWith("http") ? (
+            <img
+              src={profile.avatarUrl}
+              alt={`${profile.username}'s profile`}
+              className="profile-image"
+            />
+          ) : (
+            <FaUserCircle
+              className="profile-icon"
+              style={{ fontSize: "5rem", color: "#ccc" }}
+            />
+          )}
         </div>
         <div className="profile-info">
           <h2>{profile.username}</h2>

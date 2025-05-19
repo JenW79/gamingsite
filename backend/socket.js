@@ -1,8 +1,5 @@
-// backend/socket.js
 const { Server } = require("socket.io");
 const { Message } = require("./db/models");
-
-let messageHistory = [];
 
 function setupSockets(server) {
   const io = new Server(server, {
@@ -12,24 +9,41 @@ function setupSockets(server) {
     },
   });
 
-  io.on("connection", (socket) => {
-    console.log(" User connected:", socket.id);
+  io.on("connection", async (socket) => {
+    console.log("User connected:", socket.id);
 
-    // Send message history
-    socket.emit("chat history", messageHistory);
+    // Fetch last 20 messages from DB
+    const recentMessages = await Message.findAll({
+      order: [["createdAt", "DESC"]],
+      limit: 20,
+    });
 
-    // Receive message
-    socket.on("chat message", ({ text, username, avatarUrl }) => {
-      const newMsg = {
+    // Convert to plain objects with clean timestamp
+    const plainMessages = recentMessages.reverse().map((msg) => ({
+      text: msg.text,
+      username: msg.username,
+      avatarUrl: msg.avatarUrl,
+      timestamp: msg.createdAt,
+    }));
+
+    // Send to client
+    socket.emit("chat history", plainMessages);
+    console.log("📦 Emitting chat history to", socket.id, plainMessages);
+
+    // Handle incoming chat messages
+    socket.on("chat message", async ({ text, username, avatarUrl }) => {
+      const newMsg = await Message.create({
         text,
         username: username || "Anonymous",
         avatarUrl: avatarUrl || null,
-        timestamp: new Date().toISOString(),
-      };
-      messageHistory.push(newMsg);
-      if (messageHistory.length > 20) messageHistory.shift();
+      });
 
-      io.emit("chat message", newMsg);
+      io.emit("chat message", {
+        text: newMsg.text,
+        username: newMsg.username,
+        avatarUrl: newMsg.avatarUrl,
+        timestamp: newMsg.createdAt,
+      });
     });
 
     socket.on("disconnect", () => {
