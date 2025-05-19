@@ -1,0 +1,66 @@
+.combat-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 10, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.combat-modal {
+  background: #222;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 600px;
+  color: white;
+}
+
+.combat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.combat-bars {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 1rem;
+}
+
+.combat-player {
+  text-align: center;
+}
+
+.hp-bar {
+  background: #444;
+  height: 20px;
+  width: 100px;
+  border-radius: 10px;
+  margin: 0.5rem auto;
+}
+
+.hp-fill {
+  background: limegreen;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.combat-controls {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: space-around;
+}
+
+.combat-log {
+  margin-top: 1rem;
+  background: #111;
+  padding: 1rem;
+  border-radius: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+}

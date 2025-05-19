@@ -1,14 +1,14 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { requireAuth } = require('../../utils/auth');
-const { User } = require('../../db/models');
+const { requireAuth } = require("../../utils/auth");
+const { User } = require("../../db/models");
 
 // Get the current user's profile
-router.get('/profile', requireAuth, async (req, res, next) => {
+router.get("/profile", requireAuth, async (req, res, next) => {
   try {
     const userId = req.user.id;
     const user = await User.findByPk(userId, {
-      attributes: { exclude: ['password'] } // Exclude sensitive fields
+      attributes: { exclude: ["password"] }, // Exclude sensitive fields
     });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -19,15 +19,30 @@ router.get('/profile', requireAuth, async (req, res, next) => {
   }
 });
 
-router.get('/:userId', async (req, res, next) => {
+router.get("/:userId", async (req, res, next) => {
   try {
     const { userId } = req.params;
     const user = await User.findByPk(userId, {
-      attributes: ["id", "username", "email", "avatarUrl", "location", "age", "sex", "relationshipStatus"],
-      exclude: ['hashedPassword'],
+      attributes: [
+        "id",
+        "username",
+        "email",
+        "avatarUrl",
+        "location",
+        "age",
+        "sex",
+        "relationshipStatus",
+        "health",
+        "level",
+        "attack",
+        "defense",
+        "energy",
+        "cash",
+      ],
+      exclude: ["hashedPassword"],
     });
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
     res.json(user);
   } catch (error) {
@@ -35,7 +50,7 @@ router.get('/:userId', async (req, res, next) => {
   }
 });
 
-router.patch('/profile', requireAuth, async (req, res, next) => {
+router.patch("/profile", requireAuth, async (req, res, next) => {
   try {
     const userId = req.user.id;
     const { username, email, avatarUrl } = req.body;
@@ -56,6 +71,5 @@ router.patch('/profile', requireAuth, async (req, res, next) => {
     next(error);
   }
 });
-
 
 module.exports = router;

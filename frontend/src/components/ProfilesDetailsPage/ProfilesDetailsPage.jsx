@@ -3,6 +3,7 @@ import { useParams, NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { FaUserCircle } from "react-icons/fa";
+import CombatModal from "../CombatModal/CombatModal";
 import "./ProfileDetailsPage.css";
 
 function ProfileDetailPage() {
@@ -10,6 +11,7 @@ function ProfileDetailPage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const currentUser = useSelector((state) => state.session.user); // Get logged-in user
+  const [showCombat, setShowCombat] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -54,6 +56,19 @@ function ProfileDetailPage() {
           </p>
         </div>
       </div>
+      {currentUser && currentUser.id !== parseInt(userId) && (
+        <button onClick={() => setShowCombat(true)} className="fight-button">
+          💥 Fight This Player
+        </button>
+      )}
+
+      {showCombat && (
+        <CombatModal
+          attacker={currentUser}
+          defender={profile}
+          onClose={() => setShowCombat(false)}
+        />
+      )}
 
       {/* Show "Edit Profile" button only if the logged-in user is viewing their own profile */}
       {currentUser && currentUser.id === parseInt(userId) && (

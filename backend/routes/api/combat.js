@@ -1,46 +1,35 @@
 const express = require("express");
 const router = express.Router();
 const { requireAuth } = require("../../utils/auth");
-const { User, Inventory } = require("../../db/models");
+const { User, Inventory, Combat } = require("../../db/models");
+const { Op } = require("sequelize");
 
-const MAX_HEAL_USES = 2; //  Limit healing per fight
-const HEAL_COOLDOWN = 2; // Turns before healing can be used again
-
-const fightState = {};
-
-
+// -----------------------------------
+// Heal with item (booster logic)
+// -----------------------------------
 router.post("/heal", requireAuth, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found." });
 
-    const { itemId, fightId } = req.body;
-    const item = await Inventory.findOne({ where: { id: itemId, userId: user.id } });
+    const { itemId } = req.body;
+    const item = await Inventory.findOne({
+      where: { id: itemId, userId: user.id },
+    });
 
-    if (!item) return res.status(404).json({ message: "Healing item not found." });
-    if (item.type !== "potion") return res.status(400).json({ message: "This item is not for healing." });
+    if (!item)
+      return res.status(404).json({ message: "Healing item not found." });
 
-    // Initialize fight state if not tracked yet
-    if (!fightState[fightId]) {
-      fightState[fightId] = { healUses: 0, healCooldown: 0 };
-    }
+    if (item.type !== "potion")
+      return res.status(400).json({ message: "This item is not for healing." });
 
-    // ✅ Check if healing is allowed
-    if (fightState[fightId].healUses >= MAX_HEAL_USES) {
-      return res.status(400).json({ message: "You've already used all healing charges in this fight!" });
-    }
-
-    if (fightState[fightId].healCooldown > 0) {
-      return res.status(400).json({ message: `You must wait ${fightState[fightId].healCooldown} more turns before healing again.` });
-    }
-
-    // ✅ Apply Healing
     const maxHealth = 100;
     const healedAmount = item.healAmount;
-    user.health = Math.max(1, Math.min(user.health + healedAmount, maxHealth));
+    const prevHealth = user.health;
+    user.health = Math.min(user.health + healedAmount, maxHealth);
     await user.save();
 
-    // ✅ Deduct item quantity or remove if it's the last one
+    // Update item quantity or delete it
     if (item.quantity > 1) {
       item.quantity -= 1;
       await item.save();
@@ -48,15 +37,36 @@ router.post("/heal", requireAuth, async (req, res) => {
       await item.destroy();
     }
 
-    // ✅ Update Fight State
-    fightState[fightId].healUses += 1;
-    fightState[fightId].healCooldown = HEAL_COOLDOWN; // Set cooldown turns
+    // Optional: record in combat log if there's an active combat
+    const combat = await Combat.findOne({
+      where: {
+        completed: false,
+        [Op.or]: [{ attackerId: user.id }, { defenderId: user.id }],
+      },
+    });
+
+    if (combat) {
+      if (combat.attackerId === user.id) {
+        combat.attackerHP = user.health;
+      } else {
+        combat.defenderHP = user.health;
+      }
+
+      combat.log.push({
+        action: "item-heal",
+        user: user.username,
+        amount: healedAmount,
+        before: prevHealth,
+        after: user.health,
+        time: new Date().toISOString(),
+      });
+
+      await combat.save();
+    }
 
     res.json({
-      message: `You used ${item.name} and restored ${item.healAmount} HP!`,
+      message: `You used ${item.name} and restored ${healedAmount} HP!`,
       newHealth: user.health,
-      remainingHeals: MAX_HEAL_USES - fightState[fightId].healUses,
-      healCooldown: fightState[fightId].healCooldown,
     });
   } catch (error) {
     console.error("Healing Error:", error);
@@ -64,7 +74,6 @@ router.post("/heal", requireAuth, async (req, res) => {
   }
 });
 
-// ✅ Reduce Healing Cooldown Each Turn
 router.post("/turn-end", requireAuth, async (req, res) => {
   try {
     const { fightId } = req.body;
@@ -80,48 +89,172 @@ router.post("/turn-end", requireAuth, async (req, res) => {
   }
 });
 
-
-
+// -----------------------------------
+// Persistent combat attack
+// -----------------------------------
 router.post("/attack", requireAuth, async (req, res) => {
   try {
     const attackerId = req.user.id;
     const { defenderId } = req.body;
 
+    if (attackerId === parseInt(defenderId))
+      return res.status(400).json({ message: "You can't fight yourself!" });
+
     const attacker = await User.findByPk(attackerId);
     const defender = await User.findByPk(defenderId);
 
-    if (!defender) {
-      return res.status(404).json({ message: "Defender not found." });
-    }
+    if (!attacker || !defender)
+      return res.status(404).json({ message: "User not found." });
 
-    if (attacker.health <= 0) {
+    if (attacker.health <= 0)
       return res.status(400).json({ message: "You are too weak to fight!" });
-    }
 
-    if (defender.health <= 0) {
+    if (defender.health <= 0)
       return res.status(400).json({ message: "This player is already defeated!" });
-    }
 
-    //  Damage Calculation
+    // Damage calculation
     const baseDamage = Math.floor(Math.random() * 10) + 5;
     const attackPower = attacker.attack + baseDamage;
     const defensePower = defender.defense;
-    let damage = attackPower - defensePower;
-    damage = damage > 0 ? damage : 1;
+    const damage = Math.max(1, attackPower - defensePower);
 
-    // Apply Damage
-    defender.health -= damage;
+    // Update defender health
+    defender.health = Math.max(0, defender.health - damage);
     await defender.save();
+
+    // Find or create combat session
+    let combat = await Combat.findOne({
+      where: {
+        completed: false,
+        [Op.or]: [
+          { attackerId, defenderId },
+          { attackerId: defenderId, defenderId: attackerId },
+        ],
+      },
+    });
+
+    if (!combat) {
+      combat = await Combat.create({
+        attackerId,
+        defenderId,
+        attackerHP: attacker.health,
+        defenderHP: defender.health,
+        attackerXP: 0,
+        defenderXP: 0,
+        log: [],
+        completed: false,
+      });
+    }
+
+    // Update log and HP state
+    combat.defenderHP = defender.health;
+    combat.log = [...(combat.log || []), {
+      turn: new Date().toISOString(),
+      action: "attack",
+      attacker: attacker.username,
+      damage,
+    }];
+
+    if (defender.health <= 0) {
+      combat.completed = true;
+      combat.log.push({
+        action: "defeat",
+        defeated: defender.username,
+        by: attacker.username,
+        time: new Date().toISOString(),
+      });
+    }
+
+    await combat.save();
 
     return res.json({
       message: `${attacker.username} attacked ${defender.username} for ${damage} damage!`,
       defenderHealth: defender.health,
     });
-
   } catch (error) {
     console.error("Attack Error:", error);
     return res.status(500).json({ message: "An error occurred during combat." });
   }
 });
+
+// -----------------------------------
+// Resume fight if in progress
+// -----------------------------------
+router.get("/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const combat = await Combat.findOne({
+      where: {
+        completed: false,
+        [Op.or]: [
+          { attackerId: userId },
+          { defenderId: userId }
+        ],
+      },
+      include: [
+        { model: User, as: "attacker", attributes: ["id", "username", "avatarUrl", "health"] },
+        { model: User, as: "defender", attributes: ["id", "username", "avatarUrl", "health"] },
+      ],
+    });
+
+    if (!combat) {
+      return res.status(404).json({ message: "No active combat found." });
+    }
+
+    res.json(combat);
+  } catch (err) {
+    console.error("Error loading combat:", err);
+    res.status(500).json({ message: "Failed to load combat." });
+  }
+});
+
+router.post("/manual-heal", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const healAmount = 10; // base recovery
+    const maxHealth = 100;
+
+    const user = await User.findByPk(userId);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    user.health = Math.min(user.health + healAmount, maxHealth);
+    await user.save();
+
+    const combat = await Combat.findOne({
+      where: {
+        completed: false,
+        [Op.or]: [{ attackerId: userId }, { defenderId: userId }],
+      },
+    });
+
+    if (combat) {
+      // Update combat state
+      if (combat.attackerId === userId) {
+        combat.attackerHP = user.health;
+      } else {
+        combat.defenderHP = user.health;
+      }
+
+      combat.log.push({
+        turn: new Date().toISOString(),
+        action: "heal",
+        user: user.username,
+        amount: healAmount,
+      });
+
+      await combat.save();
+    }
+
+    return res.json({
+      message: `You recovered ${healAmount} HP!`,
+      newHealth: user.health,
+    });
+  } catch (error) {
+    console.error("Manual Heal Error:", error);
+    return res.status(500).json({ message: "Failed to heal." });
+  }
+});
+
 
 module.exports = router;
