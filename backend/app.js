@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require("express");
 require("express-async-errors");
 const morgan = require("morgan");
@@ -16,7 +18,8 @@ const app = express();
 
 app.use(morgan("dev"));
 app.use(cookieParser());
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }))
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
 // ✅ Enable CORS for Frontend Communication
 app.use(

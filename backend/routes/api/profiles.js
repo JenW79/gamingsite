@@ -8,7 +8,9 @@ router.get("/profile", requireAuth, async (req, res, next) => {
   try {
     const userId = req.user.id;
     const user = await User.findByPk(userId, {
-      attributes: { exclude: ["password"] }, // Exclude sensitive fields
+      attributes: {
+        exclude: ["hashedPassword", "createdAt", "updatedAt"],
+      },
     });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -38,6 +40,8 @@ router.get("/:userId", async (req, res, next) => {
         "defense",
         "energy",
         "cash",
+        "wins",
+        "losses",
       ],
       exclude: ["hashedPassword"],
     });

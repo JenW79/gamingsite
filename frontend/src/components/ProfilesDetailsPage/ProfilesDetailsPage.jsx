@@ -51,6 +51,8 @@ function ProfileDetailPage() {
           <p>Location: {profile.location || "Not specified"}</p>
           <p>Age: {profile.age || "Not specified"}</p>
           <p>Sex: {profile.sex || "Not specified"}</p>
+          <p>Wins: {profile.wins ?? 0}</p>
+          <p>Losses: {profile.losses ?? 0}</p>
           <p>
             Relationship Status: {profile.relationshipStatus || "Not specified"}
           </p>

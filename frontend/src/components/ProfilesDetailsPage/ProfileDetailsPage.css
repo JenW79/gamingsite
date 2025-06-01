@@ -21,7 +21,7 @@
 .profile-image-container {
   width: 120px;
   height: 120px;
-  border-radius: 50%;
+  border-radius: 8px;
   overflow: hidden;
   border: 3px solid #ff4c68;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
@@ -68,7 +68,7 @@
 .profile-icon {
   width: 80px;
   height: 80px;
-  border-radius: 50%;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;

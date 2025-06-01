@@ -1,3 +1,4 @@
+/* Overlay */
 .combat-modal-overlay {
   position: fixed;
   top: 0;
@@ -11,56 +12,140 @@
   z-index: 9999;
 }
 
+/* Modal Container */
 .combat-modal {
-  background: #222;
+  background: #2b2b2b;
   padding: 2rem;
-  border-radius: 10px;
+  border-radius: 16px;
   width: 90%;
-  max-width: 600px;
-  color: white;
+  max-width: 650px;
+  color: #f1f1f1;
+  box-shadow: 0 0 18px rgba(255, 76, 104, 0.4);
+  font-family: 'Montserrat', sans-serif;
+  position: relative;
 }
 
+/* Header */
 .combat-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 2px solid #444;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
 }
 
+.combat-header h2 {
+  color: #ff4c68;
+  font-size: 1.8rem;
+}
+
+.combat-header button {
+  background: none;
+  color: #ff4c68;
+  font-size: 1.5rem;
+  border: none;
+  cursor: pointer;
+}
+
+/* Player Sections */
 .combat-bars {
   display: flex;
   justify-content: space-around;
-  margin-top: 1rem;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .combat-player {
   text-align: center;
+  flex: 1 1 200px;
 }
 
+.combat-player img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #ff4c68;
+  margin-bottom: 0.5rem;
+}
+
+/* HP Bar */
 .hp-bar {
   background: #444;
   height: 20px;
   width: 100px;
   border-radius: 10px;
   margin: 0.5rem auto;
+  overflow: hidden;
+  box-shadow: inset 0 0 5px #000;
 }
 
 .hp-fill {
-  background: limegreen;
   height: 100%;
+  transition: width 0.4s ease-in-out;
   border-radius: 10px;
 }
 
+/* Controls */
 .combat-controls {
-  margin-top: 1rem;
+  margin: 1.5rem 0;
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
 }
 
-.combat-log {
-  margin-top: 1rem;
-  background: #111;
-  padding: 1rem;
+.combat-controls button {
+  background-color: #ff4c68;
+  color: white;
+  font-weight: bold;
+  padding: 12px 20px;
+  font-size: 1rem;
+  border: none;
   border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0px #000;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.combat-controls button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.combat-controls button:hover:not(:disabled) {
+  background-color: #ef8172;
+  transform: scale(1.05);
+}
+
+/* Battle Log */
+.combat-log {
+  background-color: #1e1e1e;
+  padding: 1rem;
+  border-radius: 12px;
   max-height: 150px;
   overflow-y: auto;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
 }
+
+.combat-log h4 {
+  margin-bottom: 0.5rem;
+  color: #ef8172;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.combat-log ul {
+  padding-left: 1rem;
+  margin: 0;
+  color: #ccc;
+}
+
+.combat-log li {
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+

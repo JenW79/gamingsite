@@ -110,7 +110,9 @@ router.post("/attack", requireAuth, async (req, res) => {
       return res.status(400).json({ message: "You are too weak to fight!" });
 
     if (defender.health <= 0)
-      return res.status(400).json({ message: "This player is already defeated!" });
+      return res
+        .status(400)
+        .json({ message: "This player is already defeated!" });
 
     // Damage calculation
     const baseDamage = Math.floor(Math.random() * 10) + 5;
@@ -148,20 +150,39 @@ router.post("/attack", requireAuth, async (req, res) => {
 
     // Update log and HP state
     combat.defenderHP = defender.health;
-    combat.log = [...(combat.log || []), {
-      turn: new Date().toISOString(),
-      action: "attack",
-      attacker: attacker.username,
-      damage,
-    }];
+    combat.log = [
+      ...(combat.log || []),
+      {
+        turn: new Date().toISOString(),
+        action: "attack",
+        attacker: attacker.username,
+        damage,
+      },
+    ];
 
     if (defender.health <= 0) {
       combat.completed = true;
+
+      // Update win/loss record
+      attacker.wins += 1;
+      defender.losses += 1;
+
+      // Optional rewards
+      attacker.experience += 15;
+      attacker.cash = parseFloat(attacker.cash) + 50.0;
+
+      // Save user updates
+      await attacker.save();
+      await defender.save();
+
+      // Log outcome
       combat.log.push({
         action: "defeat",
         defeated: defender.username,
         by: attacker.username,
         time: new Date().toISOString(),
+        xpEarned: 15,
+        cashEarned: 50,
       });
     }
 
@@ -173,7 +194,9 @@ router.post("/attack", requireAuth, async (req, res) => {
     });
   } catch (error) {
     console.error("Attack Error:", error);
-    return res.status(500).json({ message: "An error occurred during combat." });
+    return res
+      .status(500)
+      .json({ message: "An error occurred during combat." });
   }
 });
 
@@ -187,14 +210,19 @@ router.get("/:userId", async (req, res) => {
     const combat = await Combat.findOne({
       where: {
         completed: false,
-        [Op.or]: [
-          { attackerId: userId },
-          { defenderId: userId }
-        ],
+        [Op.or]: [{ attackerId: userId }, { defenderId: userId }],
       },
       include: [
-        { model: User, as: "attacker", attributes: ["id", "username", "avatarUrl", "health"] },
-        { model: User, as: "defender", attributes: ["id", "username", "avatarUrl", "health"] },
+        {
+          model: User,
+          as: "attacker",
+          attributes: ["id", "username", "avatarUrl", "health"],
+        },
+        {
+          model: User,
+          as: "defender",
+          attributes: ["id", "username", "avatarUrl", "health"],
+        },
       ],
     });
 
@@ -255,6 +283,5 @@ router.post("/manual-heal", requireAuth, async (req, res) => {
     return res.status(500).json({ message: "Failed to heal." });
   }
 });
-
 
 module.exports = router;

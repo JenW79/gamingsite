@@ -1,7 +1,7 @@
 const { Server } = require("socket.io");
-const { Message } = require("./db/models");
+const { Message, DirectMessage } = require("./db/models"); 
 
-const onlineUsers = {}; // Track who is online by user ID
+const onlineUsers = {}; 
 
 function setupSockets(server) {
   const io = new Server(server, {
@@ -12,9 +12,9 @@ function setupSockets(server) {
   });
 
   io.on("connection", async (socket) => {
-    console.log(" User connected:", socket.id);
+    console.log("🟢 User connected:", socket.id);
 
-    // Chat system
+    // 🔹 Lobby Chat
     const recentMessages = await Message.findAll({
       order: [["createdAt", "DESC"]],
       limit: 20,
@@ -44,12 +44,37 @@ function setupSockets(server) {
       });
     });
 
-    // Combat system
+    // 🔹 User Registration (for combat & DMs)
     socket.on("register", (userId) => {
       onlineUsers[userId] = socket.id;
-      console.log(`User ${userId} registered on socket ${socket.id}`);
+      socket.join(`user:${userId}`); // Join a room for private messages
+      console.log(`🧩 Registered user ${userId} on socket ${socket.id}`);
     });
 
+    // 🔹 Direct Messages
+    socket.on("private message", async ({ senderId, receiverId, text }) => {
+      const msg = await DirectMessage.create({
+        senderId,
+        receiverId,
+        text,
+      });
+
+      const formatted = {
+        id: msg.id,
+        senderId,
+        receiverId,
+        text,
+        timestamp: msg.createdAt,
+      };
+
+      // Send to both sender and receiver if online
+      io.to(`user:${senderId}`).emit("private message", formatted);
+      io.to(`user:${receiverId}`).emit("private message", formatted);
+
+      console.log(` DM from ${senderId} ➡️ ${receiverId}: ${text}`);
+    });
+
+    // 🔹 Combat
     socket.on("startFight", ({ attackerId, defenderId, fightId }) => {
       const defenderSocket = onlineUsers[defenderId];
       if (defenderSocket) {
@@ -59,21 +84,18 @@ function setupSockets(server) {
     });
 
     socket.on("attackMove", ({ attackerId, defenderId, damage }) => {
-  const defenderSocket = onlineUsers[defenderId];
-  const attackerSocket = onlineUsers[attackerId];
+      const defenderSocket = onlineUsers[defenderId];
+      const attackerSocket = onlineUsers[attackerId];
 
-  // Notify the attacker — always
-  if (attackerSocket) {
-    io.to(attackerSocket).emit("attackConfirmed", { damage });
-  }
+      if (attackerSocket) {
+        io.to(attackerSocket).emit("attackConfirmed", { damage });
+      }
+      if (defenderSocket) {
+        io.to(defenderSocket).emit("receiveAttack", { attackerId, damage });
+      }
 
-  // Notify the defender — only if online
-  if (defenderSocket) {
-    io.to(defenderSocket).emit("receiveAttack", { attackerId, damage });
-  }
-
-  // Optional: Save damage to DB if you want offline HP persistence
-});
+      // Optional: Persist damage here
+    });
 
     socket.on("healMove", ({ userId, targetId, healAmount, type }) => {
       const targetSocket = onlineUsers[targetId];
@@ -88,9 +110,10 @@ function setupSockets(server) {
         }
       }
 
-      // You can add "item" logic here later
+      // Add item-based healing logic if needed
     });
 
+    // 🔹 Cleanup on disconnect
     socket.on("disconnect", () => {
       for (const userId in onlineUsers) {
         if (onlineUsers[userId] === socket.id) {
@@ -106,4 +129,5 @@ function setupSockets(server) {
 }
 
 module.exports = setupSockets;
+
 

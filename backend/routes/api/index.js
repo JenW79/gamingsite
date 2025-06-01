@@ -8,6 +8,11 @@ const gameRouter = require('./game');
 const combatRouter = require("./combat.js");
 const inventoryRouter = require("./inventory.js");
 const storeRouter = require("./store.js");
+const uploadRouter = require("./upload.js");
+const dmsRouter = require("./dms.js");
+
+
+
 
 const { restoreUser } = require("../../utils/auth.js");
 
@@ -31,6 +36,10 @@ router.use("/combat", combatRouter);
 router.use("/inventory", inventoryRouter); 
 
 router.use("/store", storeRouter); 
+
+router.use('/upload', uploadRouter);
+
+router.use('/dms', dmsRouter);
 
 router.post('/test', (req, res) => {
   res.json({ requestBody: req.body });

@@ -25,7 +25,7 @@
 .profile-modal-avatar {
   width: 80px;
   height: 80px;
-  border-radius: 50%;
+  border-radius: 8px;
   margin-bottom: 1rem;
 }
 

@@ -76,6 +76,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true, // Allow profile pictures
       },
+      avatarPublicId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       location: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -91,6 +95,16 @@ module.exports = (sequelize, DataTypes) => {
       relationshipStatus: {
         type: DataTypes.STRING,
         allowNull: true,
+      },
+      wins: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      losses: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
       },
     },
     {
