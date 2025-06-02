@@ -66,6 +66,15 @@ app.get("/api/csrf/restore", (req, res) => {
 // ✅ Attach API Routes AFTER CSRF Middleware
 app.use(routes);
 
+const path = require("path");
+
+// Serve static files from frontend build
+app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+});
+
 // ✅ Error Handling Middleware
 app.use((_req, _res, next) => {
   const err = new Error("The requested resource couldn't be found.");
