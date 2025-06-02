@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import Leaderboard from '../Leaderboard/Leaderboard';
+import Leaderboard from '../LeaderBoard/LeaderBoard';
 import "../LandingPage/LandingPage.css";
 
 function LandingPage() {
