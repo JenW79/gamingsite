@@ -1,17 +1,16 @@
-import { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { Outlet, createBrowserRouter, RouterProvider } from 'react-router-dom';
-import Navigation from './components/Navigation/Navigation';
-import * as sessionActions from './store/session';
+import { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { Outlet, createBrowserRouter, RouterProvider } from "react-router-dom";
+import Navigation from "./components/Navigation/Navigation";
+import * as sessionActions from "./store/session";
 import LandingPage from "./components/LandingPage/LandingPage";
 import ProfilesPage from "./components/ProfilesPage/ProfilesPage";
-import ProfileDetailPage from './components/ProfilesDetailsPage/ProfilesDetailsPage';
+import ProfileDetailPage from "./components/ProfilesDetailsPage/ProfilesDetailsPage";
 import GameDashboard from "./components/GameDashboard/GameDashboard";
 import ProfileEditPage from "./components/ProfileEditPage/ProfileEditPage";
-import ChatPage from './components/ChatPage/ChatPage';
-import StorePage from './components/StorePage/StorePage';
-
-
+import ChatPage from "./components/ChatPage/ChatPage";
+import StorePage from "./components/StorePage/StorePage";
+import DMpage from "./components/DmPage/DMpage";
 
 function Layout() {
   const dispatch = useDispatch();
@@ -19,7 +18,7 @@ function Layout() {
 
   useEffect(() => {
     dispatch(sessionActions.restoreUser()).then(() => {
-      setIsLoaded(true)
+      setIsLoaded(true);
     });
   }, [dispatch]);
 
@@ -35,23 +34,15 @@ const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [
-      { path: '/', 
-        element: <LandingPage /> 
-      },
-      { path: '/profiles', 
-        element: <ProfilesPage /> 
-      },
-      { path: '/profiles/:userId', 
-        element: <ProfileDetailPage /> },
-      { path: "/dashboard", 
-        element: <GameDashboard /> },
-      {path: "/profiles/edit", 
-        element: <ProfileEditPage /> },
-      {path: "/chat",
-        element: <ChatPage /> },
-      {path: "store",
-        element: <StorePage /> },
-      
+      { path: "/", element: <LandingPage /> },
+      { path: "/profiles", element: <ProfilesPage /> },
+      { path: "/profiles/:userId", element: <ProfileDetailPage /> },
+      { path: "/dm", element: <DMpage /> },
+      { path: "dm/:userId", element: <DMpage /> },
+      { path: "/dashboard", element: <GameDashboard /> },
+      { path: "/profiles/edit", element: <ProfileEditPage /> },
+      { path: "/chat", element: <ChatPage /> },
+      { path: "store", element: <StorePage /> },
     ],
   },
 ]);

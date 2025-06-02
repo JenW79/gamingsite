@@ -66,9 +66,12 @@ function ProfileButton({ user }) {
                 <NavLink to="/dashboard">Game Dashboard</NavLink>
               </li>
               <hr className="dropdown-divider" />
-              
+
               <li className="dropdown-link">
-                <NavLink to="/chat">Chat</NavLink>
+                <NavLink to="/dm">Private Messages</NavLink>
+              </li>
+              <li className="dropdown-link">
+                <NavLink to="/chat">Lobby Chat</NavLink>
               </li>
               <li className="dropdown-link">
                 <NavLink to="/store">Store</NavLink>

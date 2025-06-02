@@ -1,12 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
+import { useSelector } from "react-redux";
 
 import "./ProfileModal.css";
 
 export default function ProfileModal({ user, onClose }) {
-  console.log(" Modal mounted with user:", user);
-
   const navigate = useNavigate();
+  const currentUser = useSelector((state) => state.session.user);
   if (!user) return null;
 
   return (
@@ -37,6 +37,18 @@ export default function ProfileModal({ user, onClose }) {
         <button onClick={() => navigate(`/profiles/${user.id}`)}>
           View Full Profile
         </button>
+
+        {user.id !== 0 && currentUser?.id !== user.id && (
+          <button
+            className="dm-button"
+            onClick={() => {
+              onClose(); // Close the modal
+              navigate(`/dm/${user.id}`);
+            }}
+          >
+            Message
+          </button>
+        )}
       </div>
     </div>
   );

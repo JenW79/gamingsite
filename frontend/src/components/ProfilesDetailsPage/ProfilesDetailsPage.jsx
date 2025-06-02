@@ -78,6 +78,12 @@ function ProfileDetailPage() {
           Edit Profile
         </NavLink>
       )}
+
+      {currentUser && currentUser.id !== parseInt(userId) && (
+        <NavLink to={`/dm/${userId}`} className="dm-button">
+          Message
+        </NavLink>
+      )}
     </div>
   );
 }

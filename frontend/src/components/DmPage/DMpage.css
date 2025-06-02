@@ -1,0 +1,170 @@
+/* DMPage.css */
+
+.dm-container {
+  display: flex;
+  height: 90vh;
+  background-color: #1e1e1e;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.dm-sidebar {
+  width: 30%;
+  min-width: 250px;
+  background-color: #2b2b2b;
+  border-right: 1px solid #444;
+  overflow-y: auto;
+}
+
+.dm-sidebar h3 {
+  padding: 1rem;
+  border-bottom: 1px solid #444;
+  margin: 0;
+}
+
+.dm-thread {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid #333;
+}
+
+.dm-thread:hover,
+.dm-thread.active {
+  background-color: #3a3a3a;
+}
+
+.dm-thread img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 0.75rem;
+}
+
+.dm-thread .last-message {
+  font-size: 0.85rem;
+  color: #aaa;
+  margin: 0.25rem 0 0;
+}
+
+.dm-chat-window {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: #1a1a1a;
+  padding: 1rem;
+}
+
+.dm-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dm-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  max-width: 60%;
+  word-wrap: break-word;
+  position: relative;
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.dm-message.sent {
+  background-color: #4a4a4a;
+  align-self: flex-end;
+  text-align: left;
+}
+
+.dm-message.received {
+  background-color: #333;
+  align-self: flex-start;
+}
+
+.dm-message button {
+  position: absolute;
+  top: 0;
+  right: -25px;
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+}
+
+.dm-input {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.dm-input input {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 10px;
+  background-color: #2b2b2b;
+  color: #fff;
+}
+
+.dm-input button {
+  padding: 0.75rem 1.25rem;
+  background-color: #ff4c68;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.dm-placeholder {
+  color: #aaa;
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.message-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.message-timestamp {
+  font-size: 0.75rem;
+  color: #999;
+  text-align: right;
+  margin-top: 4px;
+}
+
+
+@media (max-width: 768px) {
+  .dm-container {
+    flex-direction: column;
+  }
+
+  .dm-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #444;
+    max-height: 40vh;
+  }
+
+  .dm-chat-window {
+    height: 60vh;
+  }
+
+  .dm-message button {
+    top: auto;
+    bottom: 0;
+    right: 0;
+    transform: translate(100%, 0);
+  }
+}

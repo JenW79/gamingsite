@@ -1,7 +1,7 @@
 const { Server } = require("socket.io");
-const { Message, DirectMessage } = require("./db/models"); 
+const { Message, DirectMessage, User } = require("./db/models");
 
-const onlineUsers = {}; 
+const onlineUsers = {};
 
 function setupSockets(server) {
   const io = new Server(server, {
@@ -53,25 +53,40 @@ function setupSockets(server) {
 
     // 🔹 Direct Messages
     socket.on("private message", async ({ senderId, receiverId, text }) => {
-      const msg = await DirectMessage.create({
-        senderId,
-        receiverId,
-        text,
+      const msg = await DirectMessage.create({ senderId, receiverId, text });
+
+      // Fetch full message with Sender and Receiver info
+      const fullMsg = await DirectMessage.findByPk(msg.id, {
+        include: [
+          {
+            model: User,
+            as: "Sender",
+            attributes: ["id", "username", "avatarUrl"],
+          },
+          {
+            model: User,
+            as: "Receiver",
+            attributes: ["id", "username", "avatarUrl"],
+          },
+        ],
       });
+      console.log("📤 Emitting to sender:", `user:${senderId}`);
+      console.log("📤 Emitting to receiver:", `user:${receiverId}`);
+      console.log("📤 Full message:", fullMsg);
 
-      const formatted = {
-        id: msg.id,
-        senderId,
-        receiverId,
-        text,
-        timestamp: msg.createdAt,
-      };
-
-      // Send to both sender and receiver if online
-      io.to(`user:${senderId}`).emit("private message", formatted);
-      io.to(`user:${receiverId}`).emit("private message", formatted);
+      io.to(`user:${senderId}`).emit("private message", fullMsg);
+      io.to(`user:${receiverId}`).emit("private message", fullMsg);
 
       console.log(` DM from ${senderId} ➡️ ${receiverId}: ${text}`);
+    });
+
+    // 🔹 Typing indicators
+    socket.on("typing", ({ toUserId, fromUserId }) => {
+      io.to(`user:${toUserId}`).emit("typing", { fromUserId });
+    });
+
+    socket.on("stop typing", ({ toUserId, fromUserId }) => {
+      io.to(`user:${toUserId}`).emit("stop typing", { fromUserId });
     });
 
     // 🔹 Combat
@@ -79,7 +94,9 @@ function setupSockets(server) {
       const defenderSocket = onlineUsers[defenderId];
       if (defenderSocket) {
         io.to(defenderSocket).emit("fightRequested", { attackerId, fightId });
-        console.log(`⚔️ Fight started by ${attackerId} targeting ${defenderId}`);
+        console.log(
+          `⚔️ Fight started by ${attackerId} targeting ${defenderId}`
+        );
       }
     });
 
@@ -129,5 +146,3 @@ function setupSockets(server) {
 }
 
 module.exports = setupSockets;
-
-

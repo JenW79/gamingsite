@@ -17,35 +17,44 @@ module.exports = {
     }
 
     return queryInterface.bulkInsert(
-      options,
-      [
-        {
-          userId: demoUser.id,
-          name: 'Iron Sword',
-          type: 'weapon',
-          quantity: 1,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          userId: demoUser.id,
-          name: 'Health Potion',
-          type: 'potion',
-          quantity: 3,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          userId: user2.id,
-          name: 'Steel Shield',
-          type: 'armor',
-          quantity: 1,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ],
-      {}
-    );
+  options,
+  [
+    {
+      userId: demoUser.id,
+      name: 'Iron Sword',
+      type: 'weapon',
+      quantity: 1,
+      damage: 15, 
+      price: 50,
+      healAmount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      userId: demoUser.id,
+      name: 'Health Potion',
+      type: 'potion',
+      quantity: 3,
+      damage: 0,
+      price: 10,
+      healAmount: 25, 
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      userId: user2.id,
+      name: 'Steel Shield',
+      type: 'armor',
+      quantity: 1,
+      damage: 0,
+      price: 40,
+      healAmount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ],
+  {}
+);
   },
 
   async down(queryInterface, Sequelize) {

@@ -8,7 +8,17 @@ router.get("/:userId", requireAuth, async (req, res, next) => {
   try {
     const { userId } = req.params;
     const user = await User.findByPk(userId, {
-      attributes: ["id", "username", "level", "experience", "energy", "cash"],
+      attributes: [
+        "id",
+        "username",
+        "level",
+        "experience",
+        "energy",
+        "cash",
+        "health",
+        "attack",
+        "defense",
+      ],
     });
 
     if (!user) {
@@ -17,7 +27,7 @@ router.get("/:userId", requireAuth, async (req, res, next) => {
 
     const inventory = await Inventory.findAll({
       where: { userId },
-      attributes: ["id", "name", "type"],
+      attributes: ["id", "name", "type", "quantity", "healAmount", "damage"],
     });
 
     res.json({ stats: user, inventory });

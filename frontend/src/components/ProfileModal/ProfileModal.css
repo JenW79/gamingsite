@@ -45,3 +45,19 @@
   height: 80px;
   border-radius: 50%;
 }
+
+.dm-button {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1.25rem;
+  background-color: #ff4c68;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.dm-button:hover {
+  background-color: #ef8172;
+}
