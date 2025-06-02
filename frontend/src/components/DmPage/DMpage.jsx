@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import io from "socket.io-client";
-import "./DMPage.css";
+import "./DMpage.css";
 
 const socket = io("http://localhost:8000", {
   withCredentials: true,
