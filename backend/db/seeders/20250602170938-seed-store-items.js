@@ -43,6 +43,7 @@ module.exports = {
       },
     ];
 
+    return queryInterface.bulkInsert(options, items, {});
   },
 
   async down(queryInterface, Sequelize) {
@@ -54,4 +55,3 @@ module.exports = {
     return queryInterface.bulkDelete(options, { userId: null });
   },
 };
-
