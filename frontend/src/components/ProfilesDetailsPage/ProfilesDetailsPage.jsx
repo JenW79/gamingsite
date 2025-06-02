@@ -1,17 +1,26 @@
 // src/components/ProfileDetailPage/ProfileDetailPage.jsx
 import { useParams, NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { FaUserCircle } from "react-icons/fa";
 import CombatModal from "../CombatModal/CombatModal";
+import { fetchGameData } from "../../store/game";
 import "./ProfileDetailsPage.css";
 
 function ProfileDetailPage() {
   const { userId } = useParams();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const currentUser = useSelector((state) => state.session.user); // Get logged-in user
+  const inventory = useSelector((state) => state.game.inventory);
+  const currentUser = useSelector((state) => state.session.user);
   const [showCombat, setShowCombat] = useState(false);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (currentUser) {
+      dispatch(fetchGameData(currentUser.id));
+    }
+  }, [dispatch, currentUser]);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -39,10 +48,9 @@ function ProfileDetailPage() {
               className="profile-image"
             />
           ) : (
-            <FaUserCircle
-              className="profile-icon"
-              style={{ fontSize: "5rem", color: "#ccc" }}
-            />
+            <div className="profile-icon">
+              <FaUserCircle />
+            </div>
           )}
         </div>
         <div className="profile-info">
@@ -58,30 +66,37 @@ function ProfileDetailPage() {
           </p>
         </div>
       </div>
+
       {currentUser && currentUser.id !== parseInt(userId) && (
-        <button onClick={() => setShowCombat(true)} className="fight-button">
-          💥 Fight This Player
-        </button>
+        <div className="profile-actions">
+          <button
+            onClick={() => setShowCombat(true)}
+            className="profile-action-button fight-button"
+          >
+            💥 Fight This Player
+          </button>
+
+          <NavLink
+            to={`/dm/${userId}`}
+            className="profile-action-button dm-button"
+          >
+            Message
+          </NavLink>
+        </div>
       )}
 
       {showCombat && (
         <CombatModal
           attacker={currentUser}
           defender={profile}
+          inventory={inventory}
           onClose={() => setShowCombat(false)}
         />
       )}
 
-      {/* Show "Edit Profile" button only if the logged-in user is viewing their own profile */}
       {currentUser && currentUser.id === parseInt(userId) && (
         <NavLink to="/profiles/edit" className="edit-profile-button">
           Edit Profile
-        </NavLink>
-      )}
-
-      {currentUser && currentUser.id !== parseInt(userId) && (
-        <NavLink to={`/dm/${userId}`} className="dm-button">
-          Message
         </NavLink>
       )}
     </div>

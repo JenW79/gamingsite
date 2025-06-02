@@ -66,13 +66,52 @@
 }
 
 .profile-icon {
-  width: 80px;
-  height: 80px;
-  border-radius: 8px;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 5rem;
+  color: #ccc;
 }
+
+/* Shared Button Base */
+.profile-action-button {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 12px 20px;
+  font-weight: bold;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+  box-shadow: 5px 5px 0px #000;
+  color: white;
+  text-align: center;
+}
+
+/* Fight Button */
+.fight-button {
+  background-color: #d9534f;
+}
+.fight-button:hover {
+  background-color: #c9302c;
+}
+
+/* Message Button */
+.dm-button {
+  background-color: #5bc0de;
+}
+.dm-button:hover {
+  background-color: #31b0d5;
+}
+
+/* Stack the action buttons vertically and center */
+.profile-details-container .fight-button,
+.profile-details-container .dm-button {
+  margin-right: 10px;
+}
+
 
 /* Mobile */
 @media (max-width: 600px) {

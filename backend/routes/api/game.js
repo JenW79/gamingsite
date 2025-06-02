@@ -6,7 +6,7 @@ const { User, Inventory } = require("../../db/models");
 // Get player's game stats and inventory
 router.get("/:userId", requireAuth, async (req, res, next) => {
   try {
-    const { userId } = req.params;
+    const userId = parseInt(req.params.userId, 10);
     const user = await User.findByPk(userId, {
       attributes: [
         "id",
@@ -14,7 +14,7 @@ router.get("/:userId", requireAuth, async (req, res, next) => {
         "level",
         "experience",
         "energy",
-        "cash",
+        "coins",
         "health",
         "attack",
         "defense",

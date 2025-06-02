@@ -1,15 +1,25 @@
 // components/CombatModal/CombatModal.jsx
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { fetchGameData } from "../../store/game";
 import "./CombatModal.css";
 import io from "socket.io-client";
 import { csrfFetch } from "../../store/csrf";
 
 const socket = io("http://localhost:5173", { withCredentials: true });
 
-export default function CombatModal({ attacker, defender, onClose }) {
+export default function CombatModal({
+  attacker,
+  defender,
+  onClose,
+  inventory,
+}) {
+  const dispatch = useDispatch();
   const [combatLog, setCombatLog] = useState([]);
   const [attackerHealth, setAttackerHealth] = useState(100);
   const [defenderHealth, setDefenderHealth] = useState(100);
+
+  console.log("CombatModal inventory:", inventory);
 
   // Register and start fight
   useEffect(() => {
@@ -34,7 +44,6 @@ export default function CombatModal({ attacker, defender, onClose }) {
         const isAttacker = data.attackerId === attacker.id;
         const savedAttackerHP = isAttacker ? data.attackerHP : data.defenderHP;
         const savedDefenderHP = isAttacker ? data.defenderHP : data.attackerHP;
-        
 
         setAttackerHealth(savedAttackerHP);
         setDefenderHealth(savedDefenderHP);
@@ -78,10 +87,14 @@ export default function CombatModal({ attacker, defender, onClose }) {
     });
 
     socket.on("receiveAttack", ({ damage, attackerId }) => {
-      setAttackerHealth((hp) => Math.max(0, hp - damage));
+      const effectiveDefense = attacker.defense ?? 0;
+      const mitigated = damage - effectiveDefense * 0.2;
+      const finalDamage = Math.max(1, Math.floor(mitigated));
+
+      setAttackerHealth((hp) => Math.max(0, hp - finalDamage));
       setCombatLog((log) => [
         ...log,
-        `You took ${damage} damage from Player ${attackerId}`,
+        `You took ${finalDamage} damage from Player ${attackerId}`,
       ]);
     });
 
@@ -119,7 +132,7 @@ export default function CombatModal({ attacker, defender, onClose }) {
       socket.off("manualHealConfirmed");
       socket.off("opponentHealed");
     };
-  }, [defender.username]);
+  }, [defender.username, attacker.defense]);
 
   const handleAttack = async () => {
     if (defenderHealth <= 0) {
@@ -135,7 +148,12 @@ export default function CombatModal({ attacker, defender, onClose }) {
       return;
     }
 
-    const damage = Math.floor(Math.random() * 10) + 5;
+    // Calculate damage based on attacker's attack and defender's defense
+    const baseDamage = attacker.attack ?? 5; // fallback in case undefined
+    const defense = defender.defense ?? 0;
+    const rawDamage = baseDamage * 0.6 + Math.random() * 3; // slight randomness
+    const mitigated = rawDamage - defense * 0.2;
+    const damage = Math.max(1, Math.floor(mitigated)); // always do at least 1
 
     try {
       const response = await csrfFetch("/api/combat/attack", {
@@ -192,6 +210,42 @@ export default function CombatModal({ attacker, defender, onClose }) {
     }
   };
 
+  const handleUseItem = async (itemId) => {
+    try {
+      const res = await csrfFetch("/api/combat/use-item", {
+        method: "POST",
+        body: JSON.stringify({
+          itemId,
+          targetId: defender.id,
+        }),
+      });
+
+      const data = await res.json();
+      setCombatLog((log) => [...log, data.message]);
+
+      // Update combat health bars
+      if (data.updatedCombat) {
+        const isAttacker = data.updatedCombat.attackerId === attacker.id;
+        setAttackerHealth(
+          isAttacker
+            ? data.updatedCombat.attackerHP
+            : data.updatedCombat.defenderHP
+        );
+        setDefenderHealth(
+          isAttacker
+            ? data.updatedCombat.defenderHP
+            : data.updatedCombat.attackerHP
+        );
+      }
+
+      // ✅ Refresh inventory after use
+      dispatch(fetchGameData(attacker.id));
+    } catch (err) {
+      console.error("Item use failed:", err);
+      setCombatLog((log) => [...log, "Failed to use item."]);
+    }
+  };
+
   return (
     <div className="combat-modal-overlay" onClick={onClose}>
       <div className="combat-modal" onClick={(e) => e.stopPropagation()}>
@@ -243,6 +297,26 @@ export default function CombatModal({ attacker, defender, onClose }) {
             Heal
           </button>
         </div>
+
+        {inventory?.length > 0 && (
+          <div className="combat-inventory">
+            <h4>Use an Item</h4>
+            <div className="combat-item-buttons">
+              {inventory
+                .filter((item) => item.type === "potion" || item.damage > 0)
+                .map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleUseItem(item.id)}
+                    disabled={attackerHealth === 0 || item.quantity <= 0}
+                    className="combat-item-button"
+                  >
+                    {item.name} ({item.quantity})
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
 
         <div className="combat-log">
           <h4>Battle Log</h4>

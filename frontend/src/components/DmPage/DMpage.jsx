@@ -36,7 +36,7 @@ function DMPage() {
     return () => {
       socket.disconnect();
     };
-  }, [currentUser.id]);
+  }, [currentUser]);
 
   useEffect(() => {
   const handleConnect = () => {

@@ -72,6 +72,13 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: 0.0,
       },
+
+      coins: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 50,
+      },
+
       avatarUrl: {
         type: DataTypes.STRING,
         allowNull: true, // Allow profile pictures

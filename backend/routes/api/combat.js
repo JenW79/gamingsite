@@ -4,76 +4,6 @@ const { requireAuth } = require("../../utils/auth");
 const { User, Inventory, Combat } = require("../../db/models");
 const { Op } = require("sequelize");
 
-// -----------------------------------
-// Heal with item (booster logic)
-// -----------------------------------
-router.post("/heal", requireAuth, async (req, res) => {
-  try {
-    const user = await User.findByPk(req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found." });
-
-    const { itemId } = req.body;
-    const item = await Inventory.findOne({
-      where: { id: itemId, userId: user.id },
-    });
-
-    if (!item)
-      return res.status(404).json({ message: "Healing item not found." });
-
-    if (item.type !== "potion")
-      return res.status(400).json({ message: "This item is not for healing." });
-
-    const maxHealth = 100;
-    const healedAmount = item.healAmount;
-    const prevHealth = user.health;
-    user.health = Math.min(user.health + healedAmount, maxHealth);
-    await user.save();
-
-    // Update item quantity or delete it
-    if (item.quantity > 1) {
-      item.quantity -= 1;
-      await item.save();
-    } else {
-      await item.destroy();
-    }
-
-    // Optional: record in combat log if there's an active combat
-    const combat = await Combat.findOne({
-      where: {
-        completed: false,
-        [Op.or]: [{ attackerId: user.id }, { defenderId: user.id }],
-      },
-    });
-
-    if (combat) {
-      if (combat.attackerId === user.id) {
-        combat.attackerHP = user.health;
-      } else {
-        combat.defenderHP = user.health;
-      }
-
-      combat.log.push({
-        action: "item-heal",
-        user: user.username,
-        amount: healedAmount,
-        before: prevHealth,
-        after: user.health,
-        time: new Date().toISOString(),
-      });
-
-      await combat.save();
-    }
-
-    res.json({
-      message: `You used ${item.name} and restored ${healedAmount} HP!`,
-      newHealth: user.health,
-    });
-  } catch (error) {
-    console.error("Healing Error:", error);
-    res.status(500).json({ message: "An error occurred while healing." });
-  }
-});
-
 router.post("/turn-end", requireAuth, async (req, res) => {
   try {
     const { fightId } = req.body;
@@ -115,10 +45,10 @@ router.post("/attack", requireAuth, async (req, res) => {
         .json({ message: "This player is already defeated!" });
 
     // Damage calculation
-    const baseDamage = Math.floor(Math.random() * 10) + 5;
-    const attackPower = attacker.attack + baseDamage;
-    const defensePower = defender.defense;
-    const damage = Math.max(1, attackPower - defensePower);
+    const baseDamage = 1; // minimum guaranteed damage
+    const statDifference = Math.floor((attacker.attack - defender.defense) / 3);
+    const randomBonus = Math.floor(Math.random() * 2); // adds 0–1 extra
+    const damage = Math.max(baseDamage, statDifference + randomBonus);
 
     // Update defender health
     defender.health = Math.max(0, defender.health - damage);
@@ -281,6 +211,112 @@ router.post("/manual-heal", requireAuth, async (req, res) => {
   } catch (error) {
     console.error("Manual Heal Error:", error);
     return res.status(500).json({ message: "Failed to heal." });
+  }
+});
+
+router.post("/use-item", requireAuth, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    const { itemId, targetId } = req.body;
+
+    const item = await Inventory.findOne({
+      where: { id: itemId, userId: user.id },
+    });
+
+    if (!item)
+      return res
+        .status(404)
+        .json({ message: "Item not found in your inventory." });
+
+    if (item.quantity < 1)
+      return res
+        .status(400)
+        .json({ message: "You have no more of this item." });
+
+    const target = await User.findByPk(targetId);
+    if (!target)
+      return res.status(404).json({ message: "Target player not found." });
+
+    const combat = await Combat.findOne({
+      where: {
+        completed: false,
+        [Op.or]: [
+          { attackerId: user.id, defenderId: targetId },
+          { attackerId: targetId, defenderId: user.id },
+        ],
+      },
+    });
+
+    if (!combat)
+      return res.status(404).json({ message: "No active combat found." });
+
+    let actionMessage = "";
+    const now = new Date().toISOString();
+
+    if (item.type === "potion") {
+      const healed = item.healAmount;
+      const prevHealth = user.health;
+      user.health = Math.min(user.health + healed, 100);
+      await user.save();
+
+      // Log healing
+      combat.log.push({
+        action: "item-heal",
+        user: user.username,
+        item: item.name,
+        amount: healed,
+        before: prevHealth,
+        after: user.health,
+        time: now,
+      });
+
+      if (combat.attackerId === user.id) combat.attackerHP = user.health;
+      else combat.defenderHP = user.health;
+
+      actionMessage = `You used ${item.name} and healed ${healed} HP.`;
+    } else if (item.damage > 0) {
+      const prevHealth = target.health;
+      target.health = Math.max(0, target.health - item.damage);
+      await target.save();
+
+      // Log attack item use
+      combat.log.push({
+        action: "item-attack",
+        user: user.username,
+        target: target.username,
+        item: item.name,
+        damage: item.damage,
+        before: prevHealth,
+        after: target.health,
+        time: now,
+      });
+
+      if (combat.attackerId === target.id) combat.attackerHP = target.health;
+      else combat.defenderHP = target.health;
+
+      actionMessage = `You used ${item.name} and dealt ${item.damage} damage.`;
+    } else {
+      return res
+        .status(400)
+        .json({ message: "This item cannot be used in combat." });
+    }
+
+    // Consume item
+    if (item.quantity > 1) {
+      item.quantity -= 1;
+      await item.save();
+    } else {
+      await item.destroy();
+    }
+
+    await combat.save();
+
+    return res.json({ message: actionMessage, updatedCombat: combat });
+  } catch (error) {
+    console.error("Item Use Error:", error);
+    res.status(500).json({ message: "Error using item." });
   }
 });
 

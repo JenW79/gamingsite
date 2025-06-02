@@ -27,6 +27,7 @@ function GameDashboard() {
           <li>Attack: {stats.attack}</li>
           <li>Defense: {stats.defense}</li>
           <li>Energy: {stats.energy}</li>
+          <li>Coins: {stats.coins}</li>
         </ul>
       </div>
 
