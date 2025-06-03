@@ -1,24 +1,24 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import eslint from 'vite-plugin-eslint';
 
-// https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  plugins: [
-    react(),
-    eslint({
-      lintOnStart: true,
-      failOnError: mode === "production"
-    })
-  ],
-  server: {
-    proxy: {
-      '/api':  process.env.FRONTEND_URL || 'http://localhost:8000'
+export default defineConfig(({ mode }) => {
+  // Load .env files manually
+  const env = loadEnv(mode, process.cwd());
+
+  return {
+    plugins: [
+      react(),
+      eslint({
+        lintOnStart: true,
+        failOnError: mode === 'production',
+      }),
+    ],
+    server: {
+      proxy: {
+        '/api': env.VITE_SOCKET_URL || 'http://localhost:8000',
+      },
     },
-  }
-  // To automatically open the app in the browser whenever the server starts,
-  // uncomment the following lines:
-  // server: {
-  //   open: true
-  // }
-}));
+  };
+});
+
