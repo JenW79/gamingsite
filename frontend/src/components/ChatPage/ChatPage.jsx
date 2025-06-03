@@ -79,21 +79,30 @@ export default function ChatPage() {
     setInput("");
   };
 
- const openUserModal = (msg) => {
-  const match =
-    profiles.find((p) => p.username === msg.username) ||
-    (user?.username === msg.username ? user : null);
+  const openUserModal = async (msg) => {
+    let match =
+      profiles.find((p) => p.username === msg.username) ||
+      (user?.username === msg.username ? user : null);
 
-  setModalUser({
-    id: match?.id || 0,
-    username: match?.username || msg.username,
-    avatarUrl: match?.avatarUrl || msg.avatarUrl || null,
-    level: match?.level ?? 1,
-    energy: match?.energy ?? 100,
-    cash: match?.cash ?? 0,
-  });
-};
+    // Runtime fallback fetch if not found in Redux
+    if (!match && msg.username) {
+      try {
+        const res = await fetch(`/api/profiles/username/${msg.username}`);
+        if (res.ok) match = await res.json();
+      } catch (e) {
+        console.warn("Profile fetch failed", e);
+      }
+    }
 
+    setModalUser({
+      id: match?.id || 0,
+      username: match?.username || msg.username,
+      avatarUrl: match?.avatarUrl || msg.avatarUrl || null,
+      level: match?.level ?? 1,
+      energy: match?.energy ?? 100,
+      cash: match?.cash ?? 0,
+    });
+  };
 
   if (!user) return <div className="chat-loading">Loading chat...</div>;
 

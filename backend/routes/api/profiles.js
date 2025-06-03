@@ -76,4 +76,36 @@ router.patch("/profile", requireAuth, async (req, res, next) => {
   }
 });
 
+// Get user by username (for chat modal fallback)
+router.get("/username/:username", async (req, res, next) => {
+  try {
+    const user = await User.findOne({
+      where: { username: req.params.username },
+      attributes: [
+        "id",
+        "username",
+        "avatarUrl",
+        "level",
+        "energy",
+        "cash",
+        "wins",
+        "losses",
+        "location",
+        "sex",
+        "age",
+        "relationshipStatus",
+      ],
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+});
+
+
 module.exports = router;

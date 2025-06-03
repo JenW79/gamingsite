@@ -20,12 +20,26 @@ function setupSockets(server) {
       limit: 20,
     });
 
-    const plainMessages = recentMessages.reverse().map((msg) => ({
-      text: msg.text,
-      username: msg.username,
-      avatarUrl: msg.avatarUrl,
-      timestamp: msg.createdAt,
-    }));
+    const plainMessages = await Promise.all(
+      recentMessages.reverse().map(async (msg) => {
+        let avatarUrl = msg.avatarUrl;
+
+        // If missing, try to pull from User table
+        if (!avatarUrl && msg.username) {
+          const user = await User.findOne({
+            where: { username: msg.username },
+          });
+          avatarUrl = user?.avatarUrl || null;
+        }
+
+        return {
+          text: msg.text,
+          username: msg.username,
+          avatarUrl,
+          timestamp: msg.createdAt,
+        };
+      })
+    );
 
     socket.emit("chat history", plainMessages);
 
@@ -35,7 +49,7 @@ function setupSockets(server) {
       const newMsg = await Message.create({
         text,
         username,
-        avatarUrl: user?.avatarUrl || null, 
+        avatarUrl: user?.avatarUrl || null,
       });
 
       io.emit("chat message", {
