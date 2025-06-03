@@ -29,17 +29,19 @@ function setupSockets(server) {
 
     socket.emit("chat history", plainMessages);
 
-    socket.on("chat message", async ({ text, username, avatarUrl }) => {
+    socket.on("chat message", async ({ text, username }) => {
+      const user = await User.findOne({ where: { username } });
+
       const newMsg = await Message.create({
         text,
-        username: username || "Anonymous",
-        avatarUrl: avatarUrl || null,
+        username,
+        avatarUrl: user?.avatarUrl || null, 
       });
 
       io.emit("chat message", {
         text: newMsg.text,
         username: newMsg.username,
-        avatarUrl: newMsg.avatarUrl,
+        avatarUrl: user?.avatarUrl || null,
         timestamp: newMsg.createdAt,
       });
     });

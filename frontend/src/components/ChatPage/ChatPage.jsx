@@ -27,12 +27,18 @@ export default function ChatPage() {
     if (!user) return;
 
     if (!socket.current || !socket.current.connected) {
-      socket.current = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:8000", {
-        withCredentials: true,
-        transports: ["websocket"],
-      });
+      socket.current = io(
+        import.meta.env.VITE_SOCKET_URL || "http://localhost:8000",
+        {
+          withCredentials: true,
+          transports: ["websocket"],
+        }
+      );
 
-      console.log("🧪 VITE_SOCKET_URL at runtime:", import.meta.env.VITE_SOCKET_URL);
+      console.log(
+        "🧪 VITE_SOCKET_URL at runtime:",
+        import.meta.env.VITE_SOCKET_URL
+      );
 
       socket.current.on("connect", () => {
         console.log("✅ Socket connected:", socket.current.id);
@@ -80,6 +86,16 @@ export default function ChatPage() {
 
     setModalUser(
       match || {
+        id: 0,
+        username: msg.username,
+        avatarUrl: msg.avatarUrl || null,
+        level: 1,
+        energy: 100,
+      }
+    );
+
+    setModalUser(
+      match || {
         username: msg.username,
         avatarUrl: msg.avatarUrl,
         level: "N/A",
@@ -123,15 +139,16 @@ export default function ChatPage() {
                     minute: "2-digit",
                   })
                 : "Just now"}
-              :
-              <div>{msg.text}</div>
+              :<div>{msg.text}</div>
             </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
 
-      {modalUser && <ProfileModal user={modalUser} onClose={() => setModalUser(null)} />}
+      {modalUser && (
+        <ProfileModal user={modalUser} onClose={() => setModalUser(null)} />
+      )}
 
       <form onSubmit={handleSubmit} className="chat-form">
         <input
