@@ -1,4 +1,4 @@
-require('dotenv').config();
+require("dotenv").config();
 
 const express = require("express");
 require("express-async-errors");
@@ -13,26 +13,41 @@ const routes = require("./routes");
 
 const { environment } = require("./config");
 const isProduction = environment === "production";
+const allowedFrontend = process.env.FRONTEND_URL || "http://localhost:5173";
 
 const app = express();
 
 app.use(morgan("dev"));
 app.use(cookieParser());
-app.use(express.json({ limit: '25mb' }))
-app.use(express.urlencoded({ extended: true, limit: '25mb' }));
+app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 
 // ✅ Enable CORS for Frontend Communication
 app.use(
   cors({
-    origin: "http://localhost:5173", // Your frontend URL
+    origin: allowedFrontend, // Your frontend URL
     credentials: true, // ✅ Allow cookies to be sent
   })
 );
 
-// ✅ Use Helmet for Security
 app.use(
   helmet({
-    crossOriginResourcePolicy: false, // Prevent issues with loading images/scripts
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: [
+          "'self'",
+          allowedFrontend,
+          allowedFrontend.replace(/^http/, "ws"), // supports ws:// or wss://
+          "https:",
+          "wss:",
+        ],
+      },
+    },
   })
 );
 
@@ -109,4 +124,3 @@ app.use((err, _req, res, _next) => {
 });
 
 module.exports = app;
-
