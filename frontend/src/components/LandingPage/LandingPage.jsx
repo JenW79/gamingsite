@@ -11,7 +11,7 @@ function LandingPage() {
     <div className="landing-page-container">
       <h1>Welcome to Game Me!</h1>
       <p>Embark on an epic adventure. Engage in battles, level up, and join a vibrant community of players.</p>
-      <button onClick={() => navigate('/game')}>Start Your Adventure</button>
+      <button onClick={() => navigate('/profile')}>Start Your Adventure</button>
       <Leaderboard />
     </div>
   );

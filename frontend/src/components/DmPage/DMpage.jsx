@@ -10,6 +10,8 @@ const socket = io(import.meta.env.VITE_SOCKET_URL  || "http://localhost:8000", {
   transports: ["websocket"],
 });
 
+console.log("🧪 VITE_SOCKET_URL at runtime:", import.meta.env.VITE_SOCKET_URL);
+
 function getCsrfToken() {
   return document.cookie
     .split("; ")
@@ -44,7 +46,7 @@ function DMPage() {
     console.log("✅ Socket connected:", socket.id);
   };
 
-  socket.on("connect", handleConnect);
+  socket?.on("connect", handleConnect);
 
   return () => {
     socket.off("connect", handleConnect);
@@ -73,7 +75,7 @@ function DMPage() {
   }, [userId]);
 
   useEffect(() => {
-    socket.on("private message", (msg) => {
+    socket?.on("private message", (msg) => {
       console.log("📩 Received message from socket:", msg);
       // Always update sidebar convo list
       setConvos((prev) => {
@@ -106,11 +108,11 @@ function DMPage() {
       }
     });
 
-    socket.on("typing", ({ fromUserId }) => {
+    socket?.on("typing", ({ fromUserId }) => {
       if (fromUserId === activeUserId) setOtherTyping(true);
     });
 
-    socket.on("stop typing", ({ fromUserId }) => {
+    socket?.on("stop typing", ({ fromUserId }) => {
       if (fromUserId === activeUserId) setOtherTyping(false);
     });
 

@@ -10,6 +10,8 @@ const socket = io(import.meta.env.VITE_SOCKET_URL  || "http://localhost:8000", {
   withCredentials: true,
   transports: ["websocket"], 
 });
+console.log("🧪 VITE_SOCKET_URL at runtime:", import.meta.env.VITE_SOCKET_URL);
+
 
 export default function CombatModal({
   attacker,
@@ -85,11 +87,11 @@ export default function CombatModal({
 
   // Socket listeners
   useEffect(() => {
-    socket.on("fightRequested", ({ attackerId }) => {
+    socket?.on("fightRequested", ({ attackerId }) => {
       setCombatLog((log) => [...log, `Player ${attackerId} started a fight!`]);
     });
 
-    socket.on("receiveAttack", ({ damage, attackerId }) => {
+    socket?.on("receiveAttack", ({ damage, attackerId }) => {
       const effectiveDefense = attacker.defense ?? 0;
       const mitigated = damage - effectiveDefense * 0.2;
       const finalDamage = Math.max(1, Math.floor(mitigated));
@@ -101,12 +103,12 @@ export default function CombatModal({
       ]);
     });
 
-    socket.on("receiveHeal", ({ healAmount }) => {
+    socket?.on("receiveHeal", ({ healAmount }) => {
       setDefenderHealth((hp) => Math.min(100, hp + healAmount));
       setCombatLog((log) => [...log, `Opponent healed for ${healAmount} HP.`]);
     });
 
-    socket.on("attackConfirmed", ({ damage }) => {
+    socket?.on("attackConfirmed", ({ damage }) => {
       setDefenderHealth((hp) => Math.max(0, hp - damage));
       setCombatLog((log) => [
         ...log,
@@ -114,7 +116,7 @@ export default function CombatModal({
       ]);
     });
 
-    socket.on("manualHealConfirmed", ({ healAmount }) => {
+    socket?.on("manualHealConfirmed", ({ healAmount }) => {
       setAttackerHealth((hp) => Math.min(100, hp + healAmount));
       setCombatLog((log) => [
         ...log,
@@ -122,7 +124,7 @@ export default function CombatModal({
       ]);
     });
 
-    socket.on("opponentHealed", ({ healAmount }) => {
+    socket?.on("opponentHealed", ({ healAmount }) => {
       setDefenderHealth((hp) => Math.min(100, hp + healAmount));
       setCombatLog((log) => [...log, `Opponent healed for ${healAmount} HP.`]);
     });

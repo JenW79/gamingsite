@@ -29,12 +29,14 @@ export default function ChatPage() {
       withCredentials: true,
       transports: ["websocket"],
     });
+    console.log("🧪 VITE_SOCKET_URL at runtime:", import.meta.env.VITE_SOCKET_URL);
 
-    socket.current.on("chat history", (history) => {
+
+    socket?.current.on("chat history", (history) => {
       setMessages(history);
     });
 
-    socket.current.on("chat message", (msg) => {
+    socket?.current.on("chat message", (msg) => {
       setMessages((prev) => [...prev, msg]);
     });
 

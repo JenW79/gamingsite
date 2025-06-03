@@ -54,7 +54,7 @@ app.use(
         ],
         fontSrc: [
           "'self'",
-          "https://fonts.gstatic.com", // ✅ This line fixes the font error
+          "https://fonts.gstatic.com", 
         ],
         imgSrc: ["'self'", "data:", "https:"],
         connectSrc: [
