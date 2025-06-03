@@ -17,13 +17,19 @@ export default function CombatModal({
   const [defenderHealth, setDefenderHealth] = useState(100);
   const socket = useRef(null);
 
-  console.log("🧪 VITE_SOCKET_URL at runtime:", import.meta.env.VITE_SOCKET_URL);
+  console.log(
+    "🧪 VITE_SOCKET_URL at runtime:",
+    import.meta.env.VITE_SOCKET_URL
+  );
 
   useEffect(() => {
-    socket.current = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:8000", {
-      withCredentials: true,
-      transports: ["websocket"],
-    });
+    socket.current = io(
+      import.meta.env.VITE_SOCKET_URL || "http://localhost:8000",
+      {
+        withCredentials: true,
+        transports: ["websocket"],
+      }
+    );
 
     socket.current.emit("register", attacker.id);
 
@@ -64,10 +70,16 @@ export default function CombatModal({
           const health = profileData.health ?? 100;
           setDefenderHealth(health);
           if (health <= 0) {
-            setCombatLog((log) => [...log, `${profileData.username} is already defeated.`]);
+            setCombatLog((log) => [
+              ...log,
+              `${profileData.username} is already defeated.`,
+            ]);
           }
         } catch (fallbackErr) {
-          console.error("Failed to load fallback defender profile:", fallbackErr);
+          console.error(
+            "Failed to load fallback defender profile:",
+            fallbackErr
+          );
           setDefenderHealth(100);
         }
       }
@@ -125,8 +137,13 @@ export default function CombatModal({
   }, [attacker.defense, defender.username]);
 
   const handleAttack = async () => {
-    if (defenderHealth <= 0) return setCombatLog((log) => [...log, `${defender.username} is already defeated.`]);
-    if (attackerHealth <= 0) return setCombatLog((log) => [...log, "You're too weak to fight!"]);
+    if (defenderHealth <= 0)
+      return setCombatLog((log) => [
+        ...log,
+        `${defender.username} is already defeated.`,
+      ]);
+    if (attackerHealth <= 0)
+      return setCombatLog((log) => [...log, "You're too weak to fight!"]);
 
     const baseDamage = attacker.attack ?? 5;
     const defense = defender.defense ?? 0;
@@ -193,8 +210,16 @@ export default function CombatModal({
 
       if (data.updatedCombat) {
         const isAttacker = data.updatedCombat.attackerId === attacker.id;
-        setAttackerHealth(isAttacker ? data.updatedCombat.attackerHP : data.updatedCombat.defenderHP);
-        setDefenderHealth(isAttacker ? data.updatedCombat.defenderHP : data.updatedCombat.attackerHP);
+        setAttackerHealth(
+          isAttacker
+            ? data.updatedCombat.attackerHP
+            : data.updatedCombat.defenderHP
+        );
+        setDefenderHealth(
+          isAttacker
+            ? data.updatedCombat.defenderHP
+            : data.updatedCombat.attackerHP
+        );
       }
 
       dispatch(fetchGameData(attacker.id));
@@ -218,7 +243,11 @@ export default function CombatModal({
             const hp = isAttacker ? attackerHealth : defenderHealth;
             return (
               <div key={p.id} className="combat-player">
-                <img src={p.avatarUrl} alt={p.username} />
+                <img
+                  src={p.avatarUrl || "/default-avatar.png"}
+                  alt={p.username}
+                  onError={(e) => (e.target.src = "/default-avatar.png")}
+                />
                 <div className="hp-bar">
                   <div
                     className="hp-fill"
@@ -228,31 +257,39 @@ export default function CombatModal({
                     }}
                   />
                 </div>
-                <p>{p.username}: {hp}/100 HP</p>
+                <p>
+                  {p.username}: {hp}/100 HP
+                </p>
               </div>
             );
           })}
         </div>
 
         <div className="combat-controls">
-          <button onClick={handleAttack} disabled={defenderHealth === 0}>Attack</button>
-          <button onClick={handleManualHeal} disabled={attackerHealth === 0}>Heal</button>
+          <button onClick={handleAttack} disabled={defenderHealth === 0}>
+            Attack
+          </button>
+          <button onClick={handleManualHeal} disabled={attackerHealth === 0}>
+            Heal
+          </button>
         </div>
 
         {inventory?.length > 0 && (
           <div className="combat-inventory">
             <h4>Use an Item</h4>
             <div className="combat-item-buttons">
-              {inventory.filter(i => i.type === "potion" || i.damage > 0).map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleUseItem(item.id)}
-                  disabled={attackerHealth === 0 || item.quantity <= 0}
-                  className="combat-item-button"
-                >
-                  {item.name} ({item.quantity})
-                </button>
-              ))}
+              {inventory
+                .filter((i) => i.type === "potion" || i.damage > 0)
+                .map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleUseItem(item.id)}
+                    disabled={attackerHealth === 0 || item.quantity <= 0}
+                    className="combat-item-button"
+                  >
+                    {item.name} ({item.quantity})
+                  </button>
+                ))}
             </div>
           </div>
         )}
@@ -269,4 +306,3 @@ export default function CombatModal({
     </div>
   );
 }
-

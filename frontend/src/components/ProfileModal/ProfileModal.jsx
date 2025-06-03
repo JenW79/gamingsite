@@ -21,6 +21,7 @@ export default function ProfileModal({ user, onClose }) {
             src={user.avatarUrl}
             alt={user.username}
             className="profile-modal-avatar"
+            onError={(e) => (e.target.src = "/default-avatar.png")}
           />
         ) : (
           <FaUserCircle

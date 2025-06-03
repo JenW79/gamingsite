@@ -79,32 +79,21 @@ export default function ChatPage() {
     setInput("");
   };
 
-  const openUserModal = (msg) => {
-    const match =
-      profiles.find((p) => p.username === msg.username) ||
-      (user?.username === msg.username ? user : null);
+ const openUserModal = (msg) => {
+  const match =
+    profiles.find((p) => p.username === msg.username) ||
+    (user?.username === msg.username ? user : null);
 
-    setModalUser(
-      match || {
-        id: 0,
-        username: msg.username,
-        avatarUrl: msg.avatarUrl || null,
-        level: 1,
-        energy: 100,
-      }
-    );
+  setModalUser({
+    id: match?.id || 0,
+    username: match?.username || msg.username,
+    avatarUrl: match?.avatarUrl || msg.avatarUrl || null,
+    level: match?.level ?? 1,
+    energy: match?.energy ?? 100,
+    cash: match?.cash ?? 0,
+  });
+};
 
-    setModalUser(
-      match || {
-        username: msg.username,
-        avatarUrl: msg.avatarUrl,
-        level: "N/A",
-        energy: "N/A",
-        cash: "N/A",
-        id: 0,
-      }
-    );
-  };
 
   if (!user) return <div className="chat-loading">Loading chat...</div>;
 
