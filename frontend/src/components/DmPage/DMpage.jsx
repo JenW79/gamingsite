@@ -4,9 +4,10 @@ import { useParams } from "react-router-dom";
 import io from "socket.io-client";
 import "./DMpage.css";
 
-const socket = io("http://localhost:8000", {
+const socket = io(process.env.FRONTEND_URL || "http://localhost:8000", {
   withCredentials: true,
   autoConnect: false,
+  transports: ["websocket"],
 });
 
 function getCsrfToken() {

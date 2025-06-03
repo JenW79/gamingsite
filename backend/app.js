@@ -26,7 +26,7 @@ app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 app.use(
   cors({
     origin: allowedFrontend, // Your frontend URL
-    credentials: true, // ✅ Allow cookies to be sent
+    credentials: true, // Allow cookies to be sent
   })
 );
 
@@ -52,7 +52,10 @@ app.use(
           "https://fonts.googleapis.com",
           "https://cdnjs.cloudflare.com",
         ],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        fontSrc: [
+          "'self'",
+          "https://fonts.gstatic.com", // ✅ This line fixes the font error
+        ],
         imgSrc: ["'self'", "data:", "https:"],
         connectSrc: [
           "'self'",

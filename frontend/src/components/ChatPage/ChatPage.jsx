@@ -25,7 +25,7 @@ export default function ChatPage() {
   useEffect(() => {
     if (!user) return;
 
-    socket.current = io("http://localhost:8000", {
+    const socket = io(process.env.FRONTEND_URL || "http://localhost:8000", {
       withCredentials: true,
       transports: ["websocket"],
     });

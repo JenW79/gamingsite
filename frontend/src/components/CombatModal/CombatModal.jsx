@@ -6,7 +6,10 @@ import "./CombatModal.css";
 import io from "socket.io-client";
 import { csrfFetch } from "../../store/csrf";
 
-const socket = io("http://localhost:5173", { withCredentials: true });
+const socket = io(process.env.FRONTEND_URL || "http://localhost:8000", {
+  withCredentials: true,
+  transports: ["websocket"], 
+});
 
 export default function CombatModal({
   attacker,
