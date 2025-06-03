@@ -243,11 +243,20 @@ export default function CombatModal({
             const hp = isAttacker ? attackerHealth : defenderHealth;
             return (
               <div key={p.id} className="combat-player">
-                <img
-                  src={p.avatarUrl || "/default-avatar.png"}
-                  alt={p.username}
-                  onError={(e) => (e.target.src = "/default-avatar.png")}
-                />
+                {p.avatarUrl && p.avatarUrl.startsWith("http") ? (
+                  <img
+                    src={p.avatarUrl}
+                    alt={p.username}
+                    className="combat-avatar"
+                    onError={(e) => (e.target.src = "/default-avatar.png")}
+                  />
+                ) : (
+                  <img
+                    src="/default-avatar.png"
+                    alt="Default avatar"
+                    className="combat-avatar"
+                  />
+                )}
                 <div className="hp-bar">
                   <div
                     className="hp-fill"
