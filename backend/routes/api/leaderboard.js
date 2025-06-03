@@ -1,7 +1,11 @@
+const express = require('express');
+const router = express.Router();
+const { User } = require('../../db/models');
+
 router.get('/', async (req, res, next) => {
   try {
     const topPlayers = await User.findAll({
-      order: [['wins', 'DESC']], // or use 'level' or 'experience' if preferred
+      order: [['wins', 'DESC']],
       limit: 10,
       attributes: [
         'id',
@@ -10,7 +14,8 @@ router.get('/', async (req, res, next) => {
         'wins',
         'losses',
         'avatarUrl',
-        'energy'
+        'energy',
+        'cash'
       ],
     });
 
@@ -19,3 +24,5 @@ router.get('/', async (req, res, next) => {
     next(error);
   }
 });
+
+module.exports = router;
