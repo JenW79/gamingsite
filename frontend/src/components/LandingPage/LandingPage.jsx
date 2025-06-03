@@ -5,6 +5,7 @@ import "../LandingPage/LandingPage.css";
 
 function LandingPage() {
   const { setModalContent } = useModal();
+  const user = useSelector((state) => state.session.user);
 
   const openSignupModal = () => {
     setModalContent(<SignupFormModal />);
@@ -15,10 +16,10 @@ function LandingPage() {
       <h1>Welcome to Game Me!</h1>
       <p>Embark on an epic adventure. Engage in battles, level up, and join a vibrant community of players.</p>
       <button onClick={openSignupModal}>Create Your Character</button>
-      <Leaderboard />
+      
+      {user && <Leaderboard />}
     </div>
   );
 }
 
 export default LandingPage;
-

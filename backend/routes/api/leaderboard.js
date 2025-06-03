@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { User } = require('../../db/models');
+const { requireAuth } = require('../../utils/auth');
 
-router.get('/', async (req, res, next) => {
+router.get('/', requireAuth, async (req, res, next) => {
   try {
     const topPlayers = await User.findAll({
       order: [['wins', 'DESC']],

@@ -32,7 +32,6 @@ export default function ProfileModal({ user, onClose }) {
         <h3>{user.username}</h3>
         <p>Level: {user.level}</p>
         <p>Energy: {user.energy}</p>
-        <p>Cash: ${user.cash}</p>
 
         <button onClick={() => navigate(`/profiles/${user.id}`)}>
           View Full Profile
