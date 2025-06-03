@@ -36,15 +36,32 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://cdnjs.cloudflare.com",
+        ],
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://fonts.googleapis.com",
+          "https://cdnjs.cloudflare.com",
+        ],
+        styleSrcElem: [
+          "'self'",
+          "https://fonts.googleapis.com",
+          "https://cdnjs.cloudflare.com",
+        ],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https:"],
         connectSrc: [
           "'self'",
           allowedFrontend,
-          allowedFrontend.replace(/^http/, "ws"), // supports ws:// or wss://
+          allowedFrontend.replace(/^http/, "ws"),
           "https:",
+          "http:",
           "wss:",
+          "ws:",
         ],
       },
     },
