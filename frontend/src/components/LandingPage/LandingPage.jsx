@@ -1,20 +1,24 @@
-import { useNavigate } from "react-router-dom";
+import { useModal } from "../../context/Modal";
 import Leaderboard from '../LeaderBoard/LeaderBoard';
+import SignupFormModal from "../SignupFormModal/SignupFormModal";
 import "../LandingPage/LandingPage.css";
 
 function LandingPage() {
-  
-  const navigate = useNavigate();
- 
+  const { setModalContent } = useModal();
+
+  const openSignupModal = () => {
+    setModalContent(<SignupFormModal />);
+  };
 
   return (
     <div className="landing-page-container">
       <h1>Welcome to Game Me!</h1>
       <p>Embark on an epic adventure. Engage in battles, level up, and join a vibrant community of players.</p>
-      <button onClick={() => navigate('/dashboard')}>Start Your Adventure</button>
+      <button onClick={openSignupModal}>Create Your Character</button>
       <Leaderboard />
     </div>
   );
 }
 
 export default LandingPage;
+

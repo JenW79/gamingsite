@@ -80,6 +80,23 @@
   box-shadow: none;
 }
 
+.switch-auth {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.login-link {
+  color: var(--accent-pink);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.login-link:hover {
+  color: var(--accent-soft);
+}
+
+
 /* Responsive Layout */
 @media (max-width: 480px) {
   .signup-form-container {
