@@ -1,6 +1,7 @@
 import { useModal } from "../../context/Modal";
 import Leaderboard from '../LeaderBoard/LeaderBoard';
 import SignupFormModal from "../SignupFormModal/SignupFormModal";
+import { useSelector } from "react-redux";
 import "../LandingPage/LandingPage.css";
 
 function LandingPage() {
