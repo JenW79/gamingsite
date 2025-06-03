@@ -1,17 +1,9 @@
-// components/CombatModal/CombatModal.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { fetchGameData } from "../../store/game";
+import { csrfFetch } from "../../store/csrf";
 import "./CombatModal.css";
 import io from "socket.io-client";
-import { csrfFetch } from "../../store/csrf";
-
-const socket = io(import.meta.env.VITE_SOCKET_URL  || "http://localhost:8000", {
-  withCredentials: true,
-  transports: ["websocket"], 
-});
-console.log("🧪 VITE_SOCKET_URL at runtime:", import.meta.env.VITE_SOCKET_URL);
-
 
 export default function CombatModal({
   attacker,
@@ -23,21 +15,30 @@ export default function CombatModal({
   const [combatLog, setCombatLog] = useState([]);
   const [attackerHealth, setAttackerHealth] = useState(100);
   const [defenderHealth, setDefenderHealth] = useState(100);
+  const socket = useRef(null);
 
-  console.log("CombatModal inventory:", inventory);
+  console.log("🧪 VITE_SOCKET_URL at runtime:", import.meta.env.VITE_SOCKET_URL);
 
-  // Register and start fight
   useEffect(() => {
-    socket.emit("register", attacker.id);
+    socket.current = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:8000", {
+      withCredentials: true,
+      transports: ["websocket"],
+    });
+
+    socket.current.emit("register", attacker.id);
 
     const fightId = `${attacker.id}-${defender.id}-${Date.now()}`;
-    socket.emit("startFight", {
+    socket.current.emit("startFight", {
       attackerId: attacker.id,
       defenderId: defender.id,
       fightId,
     });
 
     setCombatLog((log) => [...log, `You attacked ${defender.username}!`]);
+
+    return () => {
+      socket.current?.disconnect();
+    };
   }, [attacker.id, defender.id, defender.username]);
 
   useEffect(() => {
@@ -52,31 +53,21 @@ export default function CombatModal({
 
         setAttackerHealth(savedAttackerHP);
         setDefenderHealth(savedDefenderHP);
-
         setCombatLog((log) => [...log, "Resumed existing combat."]);
-      } catch (err) {
+      } catch {
         console.log("No active combat found.");
-
         setAttackerHealth(attacker.health ?? 100);
 
         try {
-          console.log("Fetching fallback profile health...");
           const profileRes = await csrfFetch(`/api/profiles/${defender.id}`);
           const profileData = await profileRes.json();
-          console.log(" Fetched profileData:", profileData);
           const health = profileData.health ?? 100;
           setDefenderHealth(health);
           if (health <= 0) {
-            setCombatLog((log) => [
-              ...log,
-              `${profileData.username} is already defeated.`,
-            ]);
+            setCombatLog((log) => [...log, `${profileData.username} is already defeated.`]);
           }
         } catch (fallbackErr) {
-          console.error(
-            "Failed to load fallback defender profile:",
-            fallbackErr
-          );
+          console.error("Failed to load fallback defender profile:", fallbackErr);
           setDefenderHealth(100);
         }
       }
@@ -85,80 +76,63 @@ export default function CombatModal({
     loadCombat();
   }, [attacker.id, attacker.health, defender.id]);
 
-  // Socket listeners
   useEffect(() => {
-    socket?.on("fightRequested", ({ attackerId }) => {
-      setCombatLog((log) => [...log, `Player ${attackerId} started a fight!`]);
+    const s = socket.current;
+    if (!s) return;
+
+    const log = (entry) => setCombatLog((prev) => [...prev, entry]);
+
+    s.on("fightRequested", ({ attackerId }) => {
+      log(`Player ${attackerId} started a fight!`);
     });
 
-    socket?.on("receiveAttack", ({ damage, attackerId }) => {
+    s.on("receiveAttack", ({ damage, attackerId }) => {
       const effectiveDefense = attacker.defense ?? 0;
       const mitigated = damage - effectiveDefense * 0.2;
       const finalDamage = Math.max(1, Math.floor(mitigated));
-
       setAttackerHealth((hp) => Math.max(0, hp - finalDamage));
-      setCombatLog((log) => [
-        ...log,
-        `You took ${finalDamage} damage from Player ${attackerId}`,
-      ]);
+      log(`You took ${finalDamage} damage from Player ${attackerId}`);
     });
 
-    socket?.on("receiveHeal", ({ healAmount }) => {
+    s.on("receiveHeal", ({ healAmount }) => {
       setDefenderHealth((hp) => Math.min(100, hp + healAmount));
-      setCombatLog((log) => [...log, `Opponent healed for ${healAmount} HP.`]);
+      log(`Opponent healed for ${healAmount} HP.`);
     });
 
-    socket?.on("attackConfirmed", ({ damage }) => {
+    s.on("attackConfirmed", ({ damage }) => {
       setDefenderHealth((hp) => Math.max(0, hp - damage));
-      setCombatLog((log) => [
-        ...log,
-        `You dealt ${damage} damage to ${defender.username}`,
-      ]);
+      log(`You dealt ${damage} damage to ${defender.username}`);
     });
 
-    socket?.on("manualHealConfirmed", ({ healAmount }) => {
+    s.on("manualHealConfirmed", ({ healAmount }) => {
       setAttackerHealth((hp) => Math.min(100, hp + healAmount));
-      setCombatLog((log) => [
-        ...log,
-        `You successfully recovered ${healAmount} HP.`,
-      ]);
+      log(`You successfully recovered ${healAmount} HP.`);
     });
 
-    socket?.on("opponentHealed", ({ healAmount }) => {
+    s.on("opponentHealed", ({ healAmount }) => {
       setDefenderHealth((hp) => Math.min(100, hp + healAmount));
-      setCombatLog((log) => [...log, `Opponent healed for ${healAmount} HP.`]);
+      log(`Opponent healed for ${healAmount} HP.`);
     });
 
     return () => {
-      socket.off("fightRequested");
-      socket.off("receiveAttack");
-      socket.off("receiveHeal");
-      socket.off("attackConfirmed");
-      socket.off("manualHealConfirmed");
-      socket.off("opponentHealed");
+      s.off("fightRequested");
+      s.off("receiveAttack");
+      s.off("receiveHeal");
+      s.off("attackConfirmed");
+      s.off("manualHealConfirmed");
+      s.off("opponentHealed");
     };
-  }, [defender.username, attacker.defense]);
+  }, [attacker.defense, defender.username]);
 
   const handleAttack = async () => {
-    if (defenderHealth <= 0) {
-      setCombatLog((log) => [
-        ...log,
-        `${defender.username} is already defeated.`,
-      ]);
-      return;
-    }
+    if (defenderHealth <= 0) return setCombatLog((log) => [...log, `${defender.username} is already defeated.`]);
+    if (attackerHealth <= 0) return setCombatLog((log) => [...log, "You're too weak to fight!"]);
 
-    if (attackerHealth <= 0) {
-      setCombatLog((log) => [...log, "You're too weak to fight!"]);
-      return;
-    }
-
-    // Calculate damage based on attacker's attack and defender's defense
-    const baseDamage = attacker.attack ?? 5; // fallback in case undefined
+    const baseDamage = attacker.attack ?? 5;
     const defense = defender.defense ?? 0;
-    const rawDamage = baseDamage * 0.6 + Math.random() * 3; // slight randomness
+    const rawDamage = baseDamage * 0.6 + Math.random() * 3;
     const mitigated = rawDamage - defense * 0.2;
-    const damage = Math.max(1, Math.floor(mitigated)); // always do at least 1
+    const damage = Math.max(1, Math.floor(mitigated));
 
     try {
       const response = await csrfFetch("/api/combat/attack", {
@@ -172,20 +146,13 @@ export default function CombatModal({
         setCombatLog((log) => [...log, data.message]);
       }
 
-      socket.emit("attackMove", {
+      socket.current.emit("attackMove", {
         attackerId: attacker.id,
         defenderId: defender.id,
         damage,
       });
     } catch (error) {
       const errData = await error.json();
-
-      if (errData.message === "This player is already defeated!") {
-        setDefenderHealth(0);
-        setCombatLog((log) => [...log, errData.message]);
-        return;
-      }
-
       const fallback = "Attack failed.";
       setCombatLog((log) => [...log, errData.message || fallback]);
     }
@@ -193,7 +160,6 @@ export default function CombatModal({
 
   const handleManualHeal = async () => {
     const healAmount = 5;
-
     try {
       const res = await csrfFetch("/api/combat/manual-heal", {
         method: "POST",
@@ -203,7 +169,7 @@ export default function CombatModal({
       setAttackerHealth(data.newHealth);
       setCombatLog((log) => [...log, data.message]);
 
-      socket.emit("healMove", {
+      socket.current.emit("healMove", {
         userId: attacker.id,
         targetId: defender.id,
         healAmount,
@@ -219,31 +185,18 @@ export default function CombatModal({
     try {
       const res = await csrfFetch("/api/combat/use-item", {
         method: "POST",
-        body: JSON.stringify({
-          itemId,
-          targetId: defender.id,
-        }),
+        body: JSON.stringify({ itemId, targetId: defender.id }),
       });
 
       const data = await res.json();
       setCombatLog((log) => [...log, data.message]);
 
-      // Update combat health bars
       if (data.updatedCombat) {
         const isAttacker = data.updatedCombat.attackerId === attacker.id;
-        setAttackerHealth(
-          isAttacker
-            ? data.updatedCombat.attackerHP
-            : data.updatedCombat.defenderHP
-        );
-        setDefenderHealth(
-          isAttacker
-            ? data.updatedCombat.defenderHP
-            : data.updatedCombat.attackerHP
-        );
+        setAttackerHealth(isAttacker ? data.updatedCombat.attackerHP : data.updatedCombat.defenderHP);
+        setDefenderHealth(isAttacker ? data.updatedCombat.defenderHP : data.updatedCombat.attackerHP);
       }
 
-      // ✅ Refresh inventory after use
       dispatch(fetchGameData(attacker.id));
     } catch (err) {
       console.error("Item use failed:", err);
@@ -260,65 +213,46 @@ export default function CombatModal({
         </div>
 
         <div className="combat-bars">
-          <div className="combat-player">
-            <img src={attacker.avatarUrl} alt={attacker.username} />
-            <div className="hp-bar">
-              <div
-                className="hp-fill"
-                style={{
-                  width: `${attackerHealth}%`,
-                  backgroundColor:
-                    attackerHealth === 0 ? "crimson" : "limegreen",
-                }}
-              />
-            </div>
-            <p>
-              {attacker.username}: {attackerHealth}/100 HP
-            </p>
-          </div>
-          <div className="combat-player">
-            <img src={defender.avatarUrl} alt={defender.username} />
-            <div className="hp-bar">
-              <div
-                className="hp-fill"
-                style={{
-                  width: `${defenderHealth}%`,
-                  backgroundColor:
-                    defenderHealth === 0 ? "crimson" : "limegreen",
-                }}
-              />
-            </div>
-            <p>
-              {defender.username}: {defenderHealth}/100 HP
-            </p>
-          </div>
+          {[attacker, defender].map((p, idx) => {
+            const isAttacker = idx === 0;
+            const hp = isAttacker ? attackerHealth : defenderHealth;
+            return (
+              <div key={p.id} className="combat-player">
+                <img src={p.avatarUrl} alt={p.username} />
+                <div className="hp-bar">
+                  <div
+                    className="hp-fill"
+                    style={{
+                      width: `${hp}%`,
+                      backgroundColor: hp === 0 ? "crimson" : "limegreen",
+                    }}
+                  />
+                </div>
+                <p>{p.username}: {hp}/100 HP</p>
+              </div>
+            );
+          })}
         </div>
 
         <div className="combat-controls">
-          <button onClick={handleAttack} disabled={defenderHealth === 0}>
-            Attack
-          </button>
-          <button onClick={handleManualHeal} disabled={attackerHealth === 0}>
-            Heal
-          </button>
+          <button onClick={handleAttack} disabled={defenderHealth === 0}>Attack</button>
+          <button onClick={handleManualHeal} disabled={attackerHealth === 0}>Heal</button>
         </div>
 
         {inventory?.length > 0 && (
           <div className="combat-inventory">
             <h4>Use an Item</h4>
             <div className="combat-item-buttons">
-              {inventory
-                .filter((item) => item.type === "potion" || item.damage > 0)
-                .map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleUseItem(item.id)}
-                    disabled={attackerHealth === 0 || item.quantity <= 0}
-                    className="combat-item-button"
-                  >
-                    {item.name} ({item.quantity})
-                  </button>
-                ))}
+              {inventory.filter(i => i.type === "potion" || i.damage > 0).map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleUseItem(item.id)}
+                  disabled={attackerHealth === 0 || item.quantity <= 0}
+                  className="combat-item-button"
+                >
+                  {item.name} ({item.quantity})
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -335,3 +269,4 @@ export default function CombatModal({
     </div>
   );
 }
+

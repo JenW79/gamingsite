@@ -4,14 +4,6 @@ import { useParams } from "react-router-dom";
 import io from "socket.io-client";
 import "./DMpage.css";
 
-const socket = io(import.meta.env.VITE_SOCKET_URL  || "http://localhost:8000", {
-  withCredentials: true,
-  autoConnect: false,
-  transports: ["websocket"],
-});
-
-console.log("🧪 VITE_SOCKET_URL at runtime:", import.meta.env.VITE_SOCKET_URL);
-
 function getCsrfToken() {
   return document.cookie
     .split("; ")
@@ -29,29 +21,76 @@ function DMPage() {
   const [typing, setTyping] = useState(false);
   const [otherTyping, setOtherTyping] = useState(false);
   const messagesEndRef = useRef(null);
+  const socket = useRef(null);
 
+  // Connect and register
   useEffect(() => {
     if (currentUser) {
-      socket.connect();
-      socket.emit("register", currentUser.id);
+      socket.current = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:8000", {
+        withCredentials: true,
+        transports: ["websocket"]
+      });
+
+      socket.current.on("connect", () => {
+        console.log("✅ Socket connected:", socket.current.id);
+        socket.current.emit("register", currentUser.id);
+      });
     }
 
     return () => {
-      socket.disconnect();
+      socket.current?.disconnect();
     };
   }, [currentUser]);
 
+  // Event listeners
   useEffect(() => {
-  const handleConnect = () => {
-    console.log("✅ Socket connected:", socket.id);
-  };
+    if (!socket.current) return;
 
-  socket?.on("connect", handleConnect);
+    const handleMessage = (msg) => {
+      console.log("📩 Received message from socket:", msg);
+      setConvos((prev) => {
+        const exists = prev.find(
+          (c) => c.otherUser.id === (msg.Sender?.id || msg.Receiver?.id)
+        );
+        const otherUser =
+          msg.senderId === currentUser.id
+            ? msg.Receiver ?? { id: msg.receiverId, username: "Unknown", avatarUrl: null }
+            : msg.Sender ?? { id: msg.senderId, username: "Unknown", avatarUrl: null };
 
-  return () => {
-    socket.off("connect", handleConnect);
-  };
-}, []);
+        if (exists) {
+          return prev.map((c) =>
+            c.otherUser.id === otherUser.id
+              ? { ...msg, otherUser, text: msg.text }
+              : c
+          );
+        }
+
+        return [{ ...msg, otherUser, text: msg.text }, ...prev];
+      });
+
+      const isActive =
+        activeUserId &&
+        (msg.senderId === activeUserId || msg.receiverId === activeUserId);
+
+      if (isActive) {
+        setMessages((prev) => [...prev, msg]);
+      }
+    };
+
+    socket.current.on("private message", handleMessage);
+    socket.current.on("typing", ({ fromUserId }) => {
+      if (fromUserId === activeUserId) setOtherTyping(true);
+    });
+    socket.current.on("stop typing", ({ fromUserId }) => {
+      if (fromUserId === activeUserId) setOtherTyping(false);
+    });
+
+    return () => {
+      socket.current.off("private message", handleMessage);
+      socket.current.off("typing");
+      socket.current.off("stop typing");
+    };
+  }, [activeUserId, currentUser.id]);
 
   useEffect(() => {
     fetch("/api/dms", { credentials: "include" })
@@ -74,59 +113,10 @@ function DMPage() {
     }
   }, [userId]);
 
-  useEffect(() => {
-    socket?.on("private message", (msg) => {
-      console.log("📩 Received message from socket:", msg);
-      // Always update sidebar convo list
-      setConvos((prev) => {
-        const exists = prev.find(
-          (c) => c.otherUser.id === (msg.Sender?.id || msg.Receiver?.id)
-        );
-        const otherUser =
-          msg.senderId === currentUser.id
-            ? msg.Receiver ?? { id: msg.receiverId, username: "Unknown", avatarUrl: null }
-            : msg.Sender ?? { id: msg.senderId, username: "Unknown", avatarUrl: null };
-
-        if (exists) {
-          return prev.map((c) =>
-            c.otherUser.id === otherUser.id
-              ? { ...msg, otherUser, text: msg.text }
-              : c
-          );
-        }
-
-        return [{ ...msg, otherUser, text: msg.text }, ...prev];
-      });
-
-      // Only update the message thread if this chat is active
-      const isActive =
-        activeUserId &&
-        (msg.senderId === activeUserId || msg.receiverId === activeUserId);
-
-      if (isActive) {
-        setMessages((prev) => [...prev, msg]);
-      }
-    });
-
-    socket?.on("typing", ({ fromUserId }) => {
-      if (fromUserId === activeUserId) setOtherTyping(true);
-    });
-
-    socket?.on("stop typing", ({ fromUserId }) => {
-      if (fromUserId === activeUserId) setOtherTyping(false);
-    });
-
-    return () => {
-      socket.off("private message");
-      socket.off("typing");
-      socket.off("stop typing");
-    };
-  }, [activeUserId, currentUser.id]);
-
   const handleSend = () => {
     if (!newMessage.trim()) return;
 
-    if (!socket.connected) {
+    if (!socket.current?.connected) {
       console.warn("❌ Socket not connected — cannot send");
       return;
     }
@@ -137,7 +127,7 @@ function DMPage() {
       text: newMessage,
     });
 
-    socket.emit("private message", {
+    socket.current.emit("private message", {
       senderId: currentUser.id,
       receiverId: activeUserId,
       text: newMessage,
@@ -145,7 +135,7 @@ function DMPage() {
 
     setNewMessage("");
 
-    socket.emit("stop typing", {
+    socket.current.emit("stop typing", {
       toUserId: activeUserId,
       fromUserId: currentUser.id,
     });
@@ -155,7 +145,7 @@ function DMPage() {
     setNewMessage(e.target.value);
     if (!typing) {
       setTyping(true);
-      socket.emit("typing", {
+      socket.current.emit("typing", {
         toUserId: activeUserId,
         fromUserId: currentUser.id,
       });
@@ -164,37 +154,34 @@ function DMPage() {
     clearTimeout(window.typingTimeout);
     window.typingTimeout = setTimeout(() => {
       setTyping(false);
-      socket.emit("stop typing", {
+      socket.current.emit("stop typing", {
         toUserId: activeUserId,
         fromUserId: currentUser.id,
       });
     }, 1000);
   };
 
- const handleDelete = async (msgId) => {
-  const csrfToken = getCsrfToken();
+  const handleDelete = async (msgId) => {
+    const csrfToken = getCsrfToken();
 
-  const res = await fetch(`/api/dms/${msgId}`, {
-    method: "DELETE",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRF-Token": csrfToken,
-    },
-  });
+    const res = await fetch(`/api/dms/${msgId}`, {
+      method: "DELETE",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+      },
+    });
 
-  if (res.ok) {
-    // Refresh current thread
-    loadChat(activeUserId);
-
-    // Refresh convo list
-    const updated = await fetch("/api/dms", { credentials: "include" });
-    const updatedData = await updated.json();
-    setConvos(updatedData);
-  } else {
-    console.error("Delete failed", await res.json());
-  }
-};
+    if (res.ok) {
+      await loadChat(activeUserId);
+      const updated = await fetch("/api/dms", { credentials: "include" });
+      const updatedData = await updated.json();
+      setConvos(updatedData);
+    } else {
+      console.error("Delete failed", await res.json());
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
