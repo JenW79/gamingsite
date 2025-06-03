@@ -7,7 +7,7 @@
    "sequelize-cli": "sequelize-cli",
    "start": "per-env",
   "start:development": "nodemon ./bin/www",
-  "start:production": "npx sequelize-cli db:seed:all --env production && node ./bin/www",
+  "start:production": "node ./bin/www",
   "build": "echo 'Skipping schema setup during build'",
   "resetDb": "npx dotenv sequelize db:seed:undo:all && npx dotenv sequelize db:migrate:undo:all && npx dotenv sequelize db:migrate && npx dotenv sequelize db:seed:all"
 },
