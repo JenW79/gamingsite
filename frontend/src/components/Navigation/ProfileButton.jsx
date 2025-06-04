@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { FaUserCircle } from "react-icons/fa";
-import { FiMenu } from "react-icons/fi";
 import * as sessionActions from "../../store/session";
 import { NavLink } from "react-router-dom";
 import OpenModalMenuItem from "./OpenModalMenuItem";
 import LoginFormModal from "../LoginFormModal/LoginFormModal";
 import SignupFormModal from "../SignupFormModal/SignupFormModal";
+
 import { useNavigate } from "react-router-dom";
 
 import "./ProfileButton.css";
@@ -15,6 +15,7 @@ function ProfileButton({ user }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
+
   const ulRef = useRef();
 
   const toggleMenu = (e) => {
@@ -35,6 +36,8 @@ function ProfileButton({ user }) {
     return () => document.removeEventListener("click", closeMenu);
   }, [showMenu]);
 
+  const ulClassName = `profile-dropdown ${showMenu ? "" : "hidden"}`;
+
   const closeMenu = () => setShowMenu(false);
 
   const logout = async (e) => {
@@ -44,12 +47,9 @@ function ProfileButton({ user }) {
     navigate("/");
   };
 
-  const ulClassName = `profile-dropdown ${showMenu ? "" : "hidden"}`;
-
   return (
     <div className="profile-button-wrapper">
       <button onClick={toggleMenu} className="profile-toggle-button">
-        <FiMenu size={24} className="menu-icon" />
         <FaUserCircle size={24} className="user-icon" />
       </button>
       {showMenu && (
@@ -66,10 +66,6 @@ function ProfileButton({ user }) {
                 <NavLink to="/dashboard">Game Dashboard</NavLink>
               </li>
               <hr className="dropdown-divider" />
-
-              <li className="dropdown-link">
-                <NavLink to="/dm">Private Messages</NavLink>
-              </li>
               <li className="dropdown-link">
                 <NavLink to="/chat">Lobby Chat</NavLink>
               </li>

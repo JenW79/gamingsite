@@ -135,4 +135,37 @@ router.delete("/:id", requireAuth, async (req, res) => {
   res.json({ message: "Message deleted." });
 });
 
+// DELETE /api/dms/convo/:userId — delete all messages between users
+router.delete("/convo/:userId", requireAuth, async (req, res) => {
+  const currentUserId = req.user.id;
+  const otherUserId = parseInt(req.params.userId, 10);
+
+  const deleted = await DirectMessage.destroy({
+    where: {
+      [Op.or]: [
+        { senderId: currentUserId, receiverId: otherUserId },
+        { senderId: otherUserId, receiverId: currentUserId }
+      ]
+    }
+  });
+
+  res.json({ message: `${deleted} messages deleted.` });
+});
+
+// GET /api/dms/unread
+router.get("/unread", requireAuth, async (req, res) => {
+  const userId = req.user.id;
+
+  const unreadCount = await DirectMessage.count({
+    where: {
+      receiverId: userId,
+      seen: false,
+    },
+  });
+
+  res.json({ count: unreadCount });
+});
+
+
+
 module.exports = router;

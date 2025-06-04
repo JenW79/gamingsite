@@ -10,7 +10,7 @@ import GameDashboard from "./components/GameDashboard/GameDashboard";
 import ProfileEditPage from "./components/ProfileEditPage/ProfileEditPage";
 import ChatPage from "./components/ChatPage/ChatPage";
 import StorePage from "./components/StorePage/StorePage";
-import DMpage from "./components/DmPage/DMpage";
+import DMModal from "./components/Dmpage/DMModal";
 import { fetchProfiles } from "./store/profiles";
 
 function Layout() {
@@ -41,8 +41,8 @@ const router = createBrowserRouter([
       { path: "/", element: <LandingPage /> },
       { path: "/profiles", element: <ProfilesPage /> },
       { path: "/profiles/:userId", element: <ProfileDetailPage /> },
-      { path: "/dm", element: <DMpage /> },
-      { path: "dm/:userId", element: <DMpage /> },
+      { path: "/dm", element: <DMModal /> },
+      { path: "dm/:userId", element: <DMModal /> },
       { path: "/dashboard", element: <GameDashboard /> },
       { path: "/profiles/edit", element: <ProfileEditPage /> },
       { path: "/chat", element: <ChatPage /> },

@@ -1,19 +1,21 @@
-// src/components/ProfileDetailPage/ProfileDetailPage.jsx
-import { useParams, NavLink } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { FaUserCircle } from "react-icons/fa";
 import CombatModal from "../CombatModal/CombatModal";
+import MessageButton from "../Navigation/MessageButton";
 import { fetchGameData } from "../../store/game";
+import { NavLink } from "react-router-dom";
 import "./ProfileDetailsPage.css";
 
 function ProfileDetailPage() {
   const { userId } = useParams();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showCombat, setShowCombat] = useState(false);
+
   const inventory = useSelector((state) => state.game.inventory);
   const currentUser = useSelector((state) => state.session.user);
-  const [showCombat, setShowCombat] = useState(false);
   const profiles = useSelector((state) => state.profiles?.list || []);
   const dispatch = useDispatch();
 
@@ -38,11 +40,7 @@ function ProfileDetailPage() {
   if (loading) return <div>Loading profile...</div>;
   if (!profile) return <div>Profile not found.</div>;
 
-  console.log("🔍 Full profiles list:", profiles);
-
   const attackerProfile = profiles.find((p) => p.id === currentUser.id);
-
-  console.log("🧠 Attacker being passed to CombatModal:", attackerProfile);
 
   return (
     <div className="profile-details-container">
@@ -83,12 +81,7 @@ function ProfileDetailPage() {
             💥 Fight This Player
           </button>
 
-          <NavLink
-            to={`/dm/${userId}`}
-            className="profile-action-button dm-button"
-          >
-            Message
-          </NavLink>
+          <MessageButton targetUserId={profile.id} variant="action" />
         </div>
       )}
 

@@ -1,0 +1,50 @@
+.message-button-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.message-toggle-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ff4c68;
+  padding: 6px;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.message-toggle-button:hover {
+  opacity: 0.8;
+}
+
+.message-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: red;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 5px;
+  border-radius: 999px;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.message-button-wrapper.action-style .message-toggle-button {
+  background: linear-gradient(to right, #e05252, #f06292);
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  margin-left: 1rem;
+  box-shadow: 3px 3px 0 black;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+

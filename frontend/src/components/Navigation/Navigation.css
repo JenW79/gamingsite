@@ -12,6 +12,18 @@
   z-index: 100;
 }
 
+.nav-left {
+  display: flex;
+  align-items: center;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+
 /* Logo */
 .logo {
   height: auto;
@@ -19,21 +31,6 @@
   cursor: pointer;
 }
 
-/* Nav List */
-.navbar ul {
-  list-style: none;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin: 0;
-  padding: 0;
-}
-
-/* List Items */
-.navbar li {
-  display: flex;
-  align-items: center;
-}
 
 .profile-button-wrapper {
   margin-left: auto;
