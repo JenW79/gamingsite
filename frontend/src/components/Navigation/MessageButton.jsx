@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { FiMessageSquare } from "react-icons/fi";
 import { useSelector } from "react-redux";
-import DMModal from "../Dmpage/DMModal";
+import DMModal from "../DMModal/DMModal";
 import io from "socket.io-client";
 import "./MessageButton.css";
 

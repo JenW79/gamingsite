@@ -10,7 +10,7 @@ import GameDashboard from "./components/GameDashboard/GameDashboard";
 import ProfileEditPage from "./components/ProfileEditPage/ProfileEditPage";
 import ChatPage from "./components/ChatPage/ChatPage";
 import StorePage from "./components/StorePage/StorePage";
-import DMModal from "./components/Dmpage/DMModal";
+import DMModal from "./components/DMModal/DMModal";
 import { fetchProfiles } from "./store/profiles";
 
 function Layout() {
