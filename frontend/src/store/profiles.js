@@ -16,13 +16,13 @@ export const updateProfile = (profile) => ({
 });
 
 
-// Thunk Action for fetching profiles from the backend API
 export const fetchProfiles = () => async (dispatch) => {
   const res = await fetch('/api/profiles');
   if (res.ok) {
-    const data = await res.json();
-    // Assuming your backend returns { profiles: [...] }
-    dispatch(setProfiles(data.profiles));
+    const data = await res.json(); 
+    dispatch(setProfiles(data));   
+  } else {
+    console.error("Failed to fetch profiles");
   }
 };
 

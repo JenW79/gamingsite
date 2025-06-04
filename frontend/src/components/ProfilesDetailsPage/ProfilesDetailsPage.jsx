@@ -14,7 +14,7 @@ function ProfileDetailPage() {
   const inventory = useSelector((state) => state.game.inventory);
   const currentUser = useSelector((state) => state.session.user);
   const [showCombat, setShowCombat] = useState(false);
-  const profiles = useSelector((state) => state.profiles.list);
+  const profiles = useSelector((state) => state.profiles?.list || []);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -38,9 +38,9 @@ function ProfileDetailPage() {
   if (loading) return <div>Loading profile...</div>;
   if (!profile) return <div>Profile not found.</div>;
 
-   console.log("🔍 Full profiles list:", profiles);
-  const attackerProfile =
-    profiles.find((p) => p.id === currentUser.id) || currentUser;
+  console.log("🔍 Full profiles list:", profiles);
+
+  const attackerProfile = profiles.find((p) => p.id === currentUser.id);
 
   console.log("🧠 Attacker being passed to CombatModal:", attackerProfile);
 
@@ -94,9 +94,7 @@ function ProfileDetailPage() {
 
       {showCombat && (
         <CombatModal
-          attacker={
-            profiles.find((p) => p.id === currentUser.id) || currentUser
-          }
+          attacker={attackerProfile || currentUser}
           defender={profile}
           inventory={inventory}
           onClose={() => setShowCombat(false)}

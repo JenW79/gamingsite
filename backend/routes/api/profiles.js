@@ -107,5 +107,29 @@ router.get("/username/:username", async (req, res, next) => {
   }
 });
 
+// Get all user profiles
+router.get("/", async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: [
+        "id",
+        "username",
+        "avatarUrl",
+        "level",
+        "health",
+        "energy",
+        "cash",
+        "wins",
+        "losses",
+      ],
+    });
+
+    res.json(users);
+  } catch (err) {
+    console.error("Failed to fetch profiles:", err);
+    res.status(500).json({ message: "Failed to load profiles" });
+  }
+});
+
 
 module.exports = router;

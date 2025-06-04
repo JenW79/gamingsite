@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       proxy: {
+        
         '/api': env.VITE_SOCKET_URL || 'http://localhost:8000',
       },
     },
