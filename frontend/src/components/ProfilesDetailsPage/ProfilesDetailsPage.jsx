@@ -38,6 +38,11 @@ function ProfileDetailPage() {
   if (loading) return <div>Loading profile...</div>;
   if (!profile) return <div>Profile not found.</div>;
 
+  const attackerProfile =
+    profiles.find((p) => p.id === currentUser.id) || currentUser;
+
+  console.log("🧠 Attacker being passed to CombatModal:", attackerProfile);
+
   return (
     <div className="profile-details-container">
       <div className="profile-header">
