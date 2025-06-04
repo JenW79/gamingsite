@@ -11,6 +11,7 @@ import ProfileEditPage from "./components/ProfileEditPage/ProfileEditPage";
 import ChatPage from "./components/ChatPage/ChatPage";
 import StorePage from "./components/StorePage/StorePage";
 import DMpage from "./components/DmPage/DMpage";
+import { fetchProfiles } from "./store/profiles";
 
 function Layout() {
   const dispatch = useDispatch();
@@ -21,6 +22,13 @@ function Layout() {
       setIsLoaded(true);
     });
   }, [dispatch]);
+
+  useEffect(() => {
+  dispatch(sessionActions.restoreUser()).then(() => {
+    dispatch(fetchProfiles()); 
+    setIsLoaded(true);
+  });
+}, [dispatch]);
 
   return (
     <>
