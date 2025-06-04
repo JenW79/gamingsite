@@ -16,7 +16,7 @@ function Navigation({ isLoaded }) {
       </div>
 
       <div className="nav-right">
-        <MessageButton showText={false} />
+        {user && <MessageButton showText={false} />}
         {isLoaded && <ProfileButton user={user} />}
       </div>
     </nav>

@@ -11,6 +11,7 @@ import ProfileEditPage from "./components/ProfileEditPage/ProfileEditPage";
 import ChatPage from "./components/ChatPage/ChatPage";
 import StorePage from "./components/StorePage/StorePage";
 import DMModal from "./components/DMModal/DMModal";
+import PlayerDirectory from "./components/PlayerDirectory/PlayerDirectory";
 import { fetchProfiles } from "./store/profiles";
 
 function Layout() {
@@ -45,6 +46,7 @@ const router = createBrowserRouter([
       { path: "dm/:userId", element: <DMModal /> },
       { path: "/dashboard", element: <GameDashboard /> },
       { path: "/profiles/edit", element: <ProfileEditPage /> },
+      { path: "/directory", element: <PlayerDirectory />},
       { path: "/chat", element: <ChatPage /> },
       { path: "store", element: <StorePage /> },
     ],
