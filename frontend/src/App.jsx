@@ -18,17 +18,16 @@ function Layout() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    dispatch(sessionActions.restoreUser()).then(() => {
-      setIsLoaded(true);
-    });
-  }, [dispatch]);
-
-  useEffect(() => {
-  dispatch(sessionActions.restoreUser()).then(() => {
-    dispatch(fetchProfiles()); 
+  const restoreSessionAndProfiles = async () => {
+    await dispatch(sessionActions.restoreUser());
+    await dispatch(fetchProfiles());
     setIsLoaded(true);
-  });
+  };
+
+  restoreSessionAndProfiles();
 }, [dispatch]);
+
+
 
   return (
     <>

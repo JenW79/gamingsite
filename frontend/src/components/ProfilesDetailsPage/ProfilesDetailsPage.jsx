@@ -38,6 +38,7 @@ function ProfileDetailPage() {
   if (loading) return <div>Loading profile...</div>;
   if (!profile) return <div>Profile not found.</div>;
 
+   console.log("🔍 Full profiles list:", profiles);
   const attackerProfile =
     profiles.find((p) => p.id === currentUser.id) || currentUser;
 
