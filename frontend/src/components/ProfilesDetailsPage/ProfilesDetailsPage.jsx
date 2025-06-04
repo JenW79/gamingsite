@@ -14,6 +14,7 @@ function ProfileDetailPage() {
   const inventory = useSelector((state) => state.game.inventory);
   const currentUser = useSelector((state) => state.session.user);
   const [showCombat, setShowCombat] = useState(false);
+  const profiles = useSelector((state) => state.profiles.list);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -87,7 +88,9 @@ function ProfileDetailPage() {
 
       {showCombat && (
         <CombatModal
-          attacker={currentUser}
+          attacker={
+            profiles.find((p) => p.id === currentUser.id) || currentUser
+          }
           defender={profile}
           inventory={inventory}
           onClose={() => setShowCombat(false)}
