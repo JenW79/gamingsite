@@ -24,10 +24,10 @@ function LoginFormModal() {
       });
   };
 
-  const loginAsDemoUser = () => {
-    dispatch(sessionActions.login({ credential: "Demo-lition", password: "password" }))
-      .then(closeModal);
-  };
+  // const loginAsDemoUser = () => {
+  //   dispatch(sessionActions.login({ credential: "Demo-lition", password: "password" }))
+  //     .then(closeModal);
+  // };
 
   return (
     <div className="login-form-container">
@@ -63,9 +63,9 @@ function LoginFormModal() {
       </form>
 
      
-      <p className="demo-user-text" onClick={loginAsDemoUser}>
+      {/* <p className="demo-user-text" onClick={loginAsDemoUser}>
        Log in as Demo User
-      </p>
+      </p> */}
     </div>
   );
 }

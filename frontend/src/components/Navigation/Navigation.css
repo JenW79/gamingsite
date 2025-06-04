@@ -122,16 +122,38 @@
   display: none;
 }
 
-/* Responsive Fix */
+
+/* Responsive Design */
 @media (max-width: 600px) {
   .navbar {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
   }
 
-  .profile-button-wrapper {
-    width: 100%;
+  .nav-left {
+    flex: 1;
+    display: flex;
     justify-content: flex-start;
-    margin-top: 10px;
+  }
+
+  .logo {
+    max-height: 36px;
+    display: block;
+  }
+
+ .nav-right {
+  flex: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; 
+  justify-content: flex-end;
+}
+
+  .profile-button-wrapper {
+    justify-content: center;
   }
 }
+
+

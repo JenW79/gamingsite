@@ -1,3 +1,4 @@
+// DMModal.jsx
 import { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
@@ -51,6 +52,10 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
           ? msg.Receiver ?? { id: msg.receiverId, username: "Unknown", avatarUrl: null }
           : msg.Sender ?? { id: msg.senderId, username: "Unknown", avatarUrl: null };
 
+      const isActive =
+        activeUserId &&
+        (msg.senderId === activeUserId || msg.receiverId === activeUserId);
+
       setConvos((prev) => {
         const exists = prev.find((c) => c.otherUser.id === otherUser.id);
         if (exists) {
@@ -60,10 +65,6 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
         }
         return [{ ...msg, otherUser, text: msg.text }, ...prev];
       });
-
-      const isActive =
-        activeUserId &&
-        (msg.senderId === activeUserId || msg.receiverId === activeUserId);
 
       if (isActive) setMessages((prev) => [...prev, msg]);
     };
@@ -90,10 +91,10 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
   }, []);
 
   useEffect(() => {
-  if (initialUserId && showDM) {
-    loadChat(initialUserId);
-  }
-}, [initialUserId, showDM]);
+    if (initialUserId && showDM) {
+      loadChat(initialUserId);
+    }
+  }, [initialUserId, showDM]);
 
   const loadChat = async (userIdToLoad) => {
     setActiveUserId(userIdToLoad);
@@ -161,6 +162,25 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
     }
   };
 
+  const handleDeleteConvo = async (userId) => {
+    const csrfToken = getCsrfToken();
+    const res = await fetch(`/api/dms/convo/${userId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+      },
+      credentials: "include",
+    });
+
+    if (res.ok) {
+      setMessages([]);
+      setActiveUserId(null);
+      const updated = await fetch("/api/dms", { credentials: "include" });
+      setConvos(await updated.json());
+    }
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -179,10 +199,14 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
               <div
                 key={c.otherUser.id}
                 className={`dm-thread ${activeUserId === c.otherUser.id ? "active" : ""}`}
-                onClick={() => {
-                  setActiveUserId(c.otherUser.id);
+                onClick={(e) => {
+                  e.stopPropagation();
                   loadChat(c.otherUser.id);
                   setModalUser(c.otherUser);
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  handleDeleteConvo(c.otherUser.id);
                 }}
               >
                 <img
