@@ -95,7 +95,10 @@ function ProfileDetailPage() {
       )}
 
       {currentUser && currentUser.id === parseInt(userId) && (
-        <NavLink to="/profiles/edit" className="edit-profile-button">
+        <NavLink
+          to={`/profiles/${currentUser.id}/edit`}
+          className="edit-profile-button"
+        >
           Edit Profile
         </NavLink>
       )}

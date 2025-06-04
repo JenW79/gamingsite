@@ -45,7 +45,7 @@ const router = createBrowserRouter([
       { path: "/dm", element: <DMModal /> },
       { path: "dm/:userId", element: <DMModal /> },
       { path: "/dashboard", element: <GameDashboard /> },
-      { path: "/profiles/edit", element: <ProfileEditPage /> },
+      { path: "/profiles/:userId/edit", element: <ProfileEditPage /> },
       { path: "/directory", element: <PlayerDirectory />},
       { path: "/chat", element: <ChatPage /> },
       { path: "store", element: <StorePage /> },
