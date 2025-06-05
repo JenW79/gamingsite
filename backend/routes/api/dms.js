@@ -166,6 +166,32 @@ router.get("/unread", requireAuth, async (req, res) => {
   res.json({ count: unreadCount });
 });
 
+router.get("/unread/count", requireAuth, async (req, res) => {
+  const count = await DirectMessage.count({
+    where: {
+      receiverId: req.user.id,
+      isRead: false,
+    },
+  });
+
+  res.json({ unreadCount: count });
+});
+
+router.post("/:userId/read", requireAuth, async (req, res) => {
+  await DirectMessage.update(
+    { isRead: true },
+    {
+      where: {
+        receiverId: req.user.id,
+        senderId: req.params.userId,
+        isRead: false,
+      },
+    }
+  );
+
+  res.json({ success: true });
+});
+
 
 
 module.exports = router;

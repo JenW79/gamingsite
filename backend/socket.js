@@ -69,7 +69,7 @@ function setupSockets(server) {
 
     // 🔹 Direct Messages
     socket.on("private message", async ({ senderId, receiverId, text }) => {
-      const msg = await DirectMessage.create({ senderId, receiverId, text });
+      const msg = await DirectMessage.create({ senderId, receiverId, text, isRead: false });
 
       // Fetch full message with Sender and Receiver info
       const fullMsg = await DirectMessage.findByPk(msg.id, {

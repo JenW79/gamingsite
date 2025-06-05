@@ -31,13 +31,46 @@ export default function MessageButton({
     });
 
     socket.current.on("private message", (msg) => {
-      if (msg.receiverId === user.id && !showDM) {
+      const isChatOpen =
+        window.__activeDMUserId === msg.senderId || msg.receiverId;
+      if (msg.receiverId === user.id && !isChatOpen && !showDM) {
         setUnreadCount((prev) => prev + 1);
       }
     });
 
-    return () => socket.current.disconnect();
+    return () => {
+      socket.current.disconnect();
+      window.__clearUnreadCount = null;
+    };
   }, [user, showDM]);
+
+  useEffect(() => {
+    if (typeof window.__clearUnreadCount !== "function") {
+      window.__clearUnreadCount = () => setUnreadCount(0);
+    }
+    return () => {
+      if (window.__clearUnreadCount) window.__clearUnreadCount = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/dms/unread/count", { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => {
+        setUnreadCount(data.unreadCount);
+      });
+  }, []);
+
+  const handleOpen = () => {
+    setShowDM(true);
+    setUnreadCount(0);
+    window.__activeDMUserId = targetUserId ?? null;
+  };
+
+  const handleClose = () => {
+    setShowDM(false);
+    window.__activeDMUserId = null;
+  };
 
   return (
     <div
@@ -47,10 +80,7 @@ export default function MessageButton({
     >
       <button
         className="message-toggle-button"
-        onClick={() => {
-          setShowDM(true);
-          setUnreadCount(0);
-        }}
+        onClick={handleOpen}
         title="Messages"
       >
         <FiMessageSquare size={22} /> {showText && "Message"}
@@ -63,7 +93,7 @@ export default function MessageButton({
         <DMModal
           showDM={true}
           initialUserId={targetUserId}
-          handleClose={() => setShowDM(false)}
+          handleClose={handleClose}
         />
       )}
     </div>

@@ -28,10 +28,13 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
 
   useEffect(() => {
     if (currentUser) {
-      socket.current = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:8000", {
-        withCredentials: true,
-        transports: ["websocket"],
-      });
+      socket.current = io(
+        import.meta.env.VITE_SOCKET_URL || "http://localhost:8000",
+        {
+          withCredentials: true,
+          transports: ["websocket"],
+        }
+      );
 
       socket.current.on("connect", () => {
         socket.current.emit("register", currentUser.id);
@@ -49,8 +52,16 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
     const handleMessage = (msg) => {
       const otherUser =
         msg.senderId === currentUser.id
-          ? msg.Receiver ?? { id: msg.receiverId, username: "Unknown", avatarUrl: null }
-          : msg.Sender ?? { id: msg.senderId, username: "Unknown", avatarUrl: null };
+          ? msg.Receiver ?? {
+              id: msg.receiverId,
+              username: "Unknown",
+              avatarUrl: null,
+            }
+          : msg.Sender ?? {
+              id: msg.senderId,
+              username: "Unknown",
+              avatarUrl: null,
+            };
 
       const isActive =
         activeUserId &&
@@ -60,7 +71,9 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
         const exists = prev.find((c) => c.otherUser.id === otherUser.id);
         if (exists) {
           return prev.map((c) =>
-            c.otherUser.id === otherUser.id ? { ...msg, otherUser, text: msg.text } : c
+            c.otherUser.id === otherUser.id
+              ? { ...msg, otherUser, text: msg.text }
+              : c
           );
         }
         return [{ ...msg, otherUser, text: msg.text }, ...prev];
@@ -98,9 +111,23 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
 
   const loadChat = async (userIdToLoad) => {
     setActiveUserId(userIdToLoad);
-    const res = await fetch(`/api/dms/${userIdToLoad}`, { credentials: "include" });
+    const res = await fetch(`/api/dms/${userIdToLoad}`, {
+      credentials: "include",
+    });
+    await fetch(`/api/dms/${userIdToLoad}/read`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": getCsrfToken(),
+      },
+    });
     const data = await res.json();
     setMessages(data);
+    window.__activeDMUserId = userIdToLoad;
+    if (typeof window.__clearUnreadCount === "function") {
+      window.__clearUnreadCount();
+    }
   };
 
   useEffect(() => {
@@ -187,10 +214,20 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
 
   if (!showDM) return null;
 
+  const handleCloseDM = () => {
+    window.__activeDMUserId = null;
+    if (typeof window.__clearUnreadCount === "function") {
+      window.__clearUnreadCount();
+    }
+    handleClose();
+  };
+
   return (
     <div className="dm-modal-backdrop" onClick={handleClose}>
       <div className="dm-modal" onClick={(e) => e.stopPropagation()}>
-        <button onClick={handleClose} className="close-button">×</button>
+        <button onClick={handleCloseDM} className="close-button">
+          ×
+        </button>
 
         <div className="dm-container">
           <div className="dm-sidebar">
@@ -198,7 +235,9 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
             {convos.map((c) => (
               <div
                 key={c.otherUser.id}
-                className={`dm-thread ${activeUserId === c.otherUser.id ? "active" : ""}`}
+                className={`dm-thread ${
+                  activeUserId === c.otherUser.id ? "active" : ""
+                }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   loadChat(c.otherUser.id);
@@ -235,7 +274,9 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
                       <span className="message-content">
                         <strong>
                           {msg.Sender?.username ||
-                            (msg.senderId === currentUser.id ? "You" : "Unknown")}
+                            (msg.senderId === currentUser.id
+                              ? "You"
+                              : "Unknown")}
                           :
                         </strong>{" "}
                         {msg.text}
@@ -251,7 +292,9 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
                       )}
                     </div>
                   ))}
-                  {otherTyping && <div className="typing-indicator">Typing...</div>}
+                  {otherTyping && (
+                    <div className="typing-indicator">Typing...</div>
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
                 <div className="dm-input">
@@ -279,4 +322,3 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
     </div>
   );
 }
-
