@@ -18,8 +18,9 @@ const server = http.createServer(app);
 // Setup Umzug for Sequelize migrations
 const runMigrations = async () => {
   const umzug = new Umzug({
-    migrations: {
-      glob: path.join(__dirname, '../migrations/*.js'),
+     migrations: {
+      glob: 'migrations/*.js',                
+      cwd: path.join(__dirname, '..'),       
     },
     context: db.sequelize.getQueryInterface(),
     storage: new SequelizeStorage({ sequelize: db.sequelize }),
