@@ -1,29 +1,46 @@
 #!/usr/bin/env node
+
 // backend/bin/www
 
-// Import environment variables
 require('dotenv').config();
 
 const { port } = require('../config');
-
 const app = require('../app');
 const db = require('../db/models');
 const http = require("http");
 const setupSockets = require("../socket");
 
+const { Umzug, SequelizeStorage } = require('umzug');
+const path = require('path');
+
 const server = http.createServer(app);
-// Check the database connection before starting the app
+
+// Setup Umzug for Sequelize migrations
+const runMigrations = async () => {
+  const umzug = new Umzug({
+    migrations: {
+      glob: path.join(__dirname, '../migrations/*.js'),
+    },
+    context: db.sequelize.getQueryInterface(),
+    storage: new SequelizeStorage({ sequelize: db.sequelize }),
+    logger: console,
+  });
+
+  await umzug.up();
+};
+
 db.sequelize
   .authenticate()
-  .then(() => {
+  .then(async () => {
     console.log('🟢 DB connection success! Sequelize is ready to use...');
-    return db.sequelize.sync(); //  ensures tables exist
+    await runMigrations();
+    console.log('🧩 All migrations applied.');
   })
   .then(() => {
     setupSockets(server);
     server.listen(port, () => console.log(`🚀 Listening on port ${port}...`));
   })
   .catch((err) => {
-    console.error('🔥 Failed to connect to DB or sync:', err);
+    console.error('🔥 Failed to connect to DB or run migrations:', err);
     process.exit(1);
   });
