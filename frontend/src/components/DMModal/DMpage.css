@@ -9,7 +9,7 @@
   border: 1px solid #333;
   border-radius: 10px;
   overflow: hidden;
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
 }
 
 .dm-sidebar {
@@ -206,7 +206,9 @@
   .dm-container {
     flex-direction: column;
   }
-
+  .dm-container.chat-active {
+    flex-direction: column;
+  }
   .dm-sidebar {
     width: 100%;
     border-right: none;
@@ -215,7 +217,7 @@
   }
 
   .dm-chat-window {
-    height: 60vh;
+    height: 100vh;
   }
 
   .dm-message button {
@@ -223,5 +225,30 @@
     bottom: 0;
     right: 0;
     transform: translate(100%, 0);
+  }
+
+  .hide-on-mobile {
+    display: none;
+  }
+
+  .dm-input {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dm-input button {
+    width: 100%;
+  }
+
+  .back-button {
+    order: -1;
+    margin-bottom: 0.5rem;
+    align-self: flex-start;
+    color: #ff4c68;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0;
   }
 }

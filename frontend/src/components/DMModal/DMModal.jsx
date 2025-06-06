@@ -50,6 +50,7 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
     if (!socket.current) return;
 
     const handleMessage = (msg) => {
+      console.log("📩 Received private message via socket:", msg);
       const otherUser =
         msg.senderId === currentUser.id
           ? msg.Receiver ?? {
@@ -79,7 +80,8 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
         return [{ ...msg, otherUser, text: msg.text }, ...prev];
       });
 
-      if (isActive) setMessages((prev) => [...prev, msg]);
+      if (isActive) console.log("📥 Appending received message to chat");
+      setMessages((prev) => [...prev, msg]);
     };
 
     socket.current.on("private message", handleMessage);
@@ -137,12 +139,15 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
   const handleSend = () => {
     if (!newMessage.trim() || !socket.current?.connected) return;
 
-    socket.current.emit("private message", {
+    const msgToSend = {
       senderId: currentUser.id,
       receiverId: activeUserId,
       text: newMessage,
-    });
+    };
 
+    console.log("📤 handleSend emitting message:", msgToSend);
+
+    socket.current.emit("private message", msgToSend);
     setNewMessage("");
 
     socket.current.emit("stop typing", {
@@ -150,7 +155,6 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
       fromUserId: currentUser.id,
     });
   };
-
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
     if (!typing) {
@@ -229,8 +233,8 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
           ×
         </button>
 
-        <div className="dm-container">
-          <div className="dm-sidebar">
+        <div className={`dm-container ${activeUserId ? "chat-active" : ""}`}>
+          <div className={`dm-sidebar ${activeUserId ? "hide-on-mobile" : ""}`}>
             <h3>Conversations</h3>
             {convos.map((c) => (
               <div
@@ -241,17 +245,35 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
                 onClick={(e) => {
                   e.stopPropagation();
                   loadChat(c.otherUser.id);
-                  setModalUser(c.otherUser);
-                }}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  handleDeleteConvo(c.otherUser.id);
                 }}
               >
                 <img
                   src={c.otherUser.avatarUrl || "/placeholder-avatar.png"}
                   alt="avatar"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setModalUser(c.otherUser);
+                  }}
+                  style={{ cursor: "pointer" }}
                 />
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteConvo(c.otherUser.id);
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#888",
+                    fontSize: "1.1rem",
+                    cursor: "pointer",
+                    marginLeft: "auto",
+                  }}
+                  title="Delete conversation"
+                >
+                  🗑️
+                </button>
                 <div>
                   <strong>{c.otherUser.username}</strong>
                   <p className="last-message">{c.text}</p>
@@ -297,6 +319,15 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
                   )}
                   <div ref={messagesEndRef} />
                 </div>
+                {activeUserId && window.innerWidth <= 768 && (
+                  <button
+                    className="back-button"
+                    onClick={() => setActiveUserId(null)}
+                  >
+                    ← Back to Conversations
+                  </button>
+                )}
+
                 <div className="dm-input">
                   <input
                     type="text"

@@ -21,7 +21,9 @@ function LandingPage() {
       </p>
 
       {!user && (
-        <button onClick={openSignupModal}>Create Your Character</button>
+        <button onClick={openSignupModal} className="start-btn">
+          Create Your Character
+        </button>
       )}
 
       {user && <Leaderboard />}
@@ -30,4 +32,3 @@ function LandingPage() {
 }
 
 export default LandingPage;
-

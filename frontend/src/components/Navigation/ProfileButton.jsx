@@ -60,24 +60,36 @@ function ProfileButton({ user }) {
               <li>{user.email || "No Email"}</li>
               <hr className="dropdown-divider" />
               <li className="dropdown-link">
-                <NavLink to={`/profiles/${user.id}`}>View Profile</NavLink>
+                <NavLink to={`/profiles/${user.id}`} onClick={closeMenu}>
+                  View Profile
+                </NavLink>
               </li>
               <li className="dropdown-link">
-                <NavLink to={`/profiles/${user.id}/edit`}>Edit Profile</NavLink>
-              </li>
-              <hr className="dropdown-divider" />  
-              <li className="dropdown-link">
-                <NavLink to="/dashboard">Game Dashboard</NavLink>
+                <NavLink to={`/profiles/${user.id}/edit`} onClick={closeMenu}>
+                  Edit Profile
+                </NavLink>
               </li>
               <hr className="dropdown-divider" />
               <li className="dropdown-link">
-                <NavLink to="/directory">Find Players</NavLink>
+                <NavLink to="/dashboard" onClick={closeMenu}>
+                  Game Dashboard
+                </NavLink>
+              </li>
+              <hr className="dropdown-divider" />
+              <li className="dropdown-link">
+                <NavLink to="/directory" onClick={closeMenu}>
+                  Find Players
+                </NavLink>
               </li>
               <li className="dropdown-link">
-                <NavLink to="/chat">Lobby Chat</NavLink>
+                <NavLink to="/chat" onClick={closeMenu}>
+                  Lobby Chat
+                </NavLink>
               </li>
               <li className="dropdown-link">
-                <NavLink to="/store">Store</NavLink>
+                <NavLink to="/store" onClick={closeMenu}>
+                  Store
+                </NavLink>
               </li>
               <hr className="dropdown-divider" />
               <li>
