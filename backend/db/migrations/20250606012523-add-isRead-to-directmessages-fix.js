@@ -9,7 +9,7 @@ if (process.env.NODE_ENV === "production" && process.env.SCHEMA) {
 module.exports = {
   async up(queryInterface, Sequelize) {
     return await queryInterface.addColumn(
-      "DirectMessages",
+      "directmessages",
       "isRead",
       {
         type: Sequelize.BOOLEAN,
@@ -21,6 +21,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    return await queryInterface.removeColumn("DirectMessages", "isRead", options);
+    return await queryInterface.removeColumn("directmessages", "isRead", options);
   },
 };
