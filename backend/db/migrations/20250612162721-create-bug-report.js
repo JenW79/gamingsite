@@ -1,4 +1,8 @@
 "use strict";
+let options = {};
+if (process.env.NODE_ENV === "production" && process.env.SCHEMA) {
+  options.schema = process.env.SCHEMA;
+}
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchGameData } from "../../store/game";
+import BugReportForm from "../BugReports/BugReportForm";
 import "./GameDashboard.css";
 
 function GameDashboard() {
@@ -39,10 +40,16 @@ function GameDashboard() {
         ) : (
           <ul>
             {inventory.map((item) => (
-              <li key={item.id}> {item.name} ({item.type}) - Quantity: {item.quantity}</li>
+              <li key={item.id}>
+                {" "}
+                {item.name} ({item.type}) - Quantity: {item.quantity}
+              </li>
             ))}
           </ul>
         )}
+      </div>
+      <div className="bug-report-section">
+        <BugReportForm user={user} />
       </div>
     </div>
   );
