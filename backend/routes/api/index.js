@@ -10,6 +10,7 @@ const inventoryRouter = require("./inventory.js");
 const storeRouter = require("./store.js");
 const uploadRouter = require("./upload.js");
 const dmsRouter = require("./dms.js");
+const bugReportRouter = require("./bugreport.js");
 
 
 
@@ -40,6 +41,8 @@ router.use("/store", storeRouter);
 router.use('/upload', uploadRouter);
 
 router.use('/dms', dmsRouter);
+
+router.use('/bugreport', bugReportRouter);
 
 router.post('/test', (req, res) => {
   res.json({ requestBody: req.body });
