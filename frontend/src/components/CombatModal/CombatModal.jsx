@@ -339,7 +339,7 @@ export default function CombatModal({
 
               {attackerHealth === 0 && (
                 <p className="combat-warning">
-                  💀 You're knocked out! Heal or use a potion to recover.
+                  💀 You&apos;re knocked out! Heal or use a potion to recover.
                 </p>
               )}
             </div>
