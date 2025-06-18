@@ -11,6 +11,7 @@ const storeRouter = require("./store.js");
 const uploadRouter = require("./upload.js");
 const dmsRouter = require("./dms.js");
 const bugReportRouter = require("./bugreport.js");
+const levelsRoutes = require("./levels.js");
 
 
 
@@ -43,6 +44,8 @@ router.use('/upload', uploadRouter);
 router.use('/dms', dmsRouter);
 
 router.use('/bugreport', bugReportRouter);
+
+router.use('/levels', levelsRoutes);
 
 router.post('/test', (req, res) => {
   res.json({ requestBody: req.body });

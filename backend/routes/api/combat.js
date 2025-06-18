@@ -45,16 +45,16 @@ router.post("/attack", requireAuth, async (req, res) => {
         .json({ message: "This player is already defeated!" });
 
     // Damage calculation
-    const baseDamage = 1; // minimum guaranteed damage
+    const baseDamage = 1;
     const statDifference = Math.floor((attacker.attack - defender.defense) / 3);
-    const randomBonus = Math.floor(Math.random() * 2); // adds 0–1 extra
+    const randomBonus = Math.floor(Math.random() * 2);
     const damage = Math.max(baseDamage, statDifference + randomBonus);
 
     // Update defender health
     defender.health = Math.max(0, defender.health - damage);
     await defender.save();
 
-    // Find or create combat session
+    // Find or create combat
     let combat = await Combat.findOne({
       where: {
         completed: false,
@@ -78,7 +78,7 @@ router.post("/attack", requireAuth, async (req, res) => {
       });
     }
 
-    // Update log and HP state
+    // Update combat state
     combat.defenderHP = defender.health;
     combat.log = [
       ...(combat.log || []),
@@ -90,37 +90,89 @@ router.post("/attack", requireAuth, async (req, res) => {
       },
     ];
 
+    // If defender is defeated
     if (defender.health <= 0) {
       combat.completed = true;
 
-      // Update win/loss record
+      // Win/loss
       attacker.wins += 1;
       defender.losses += 1;
 
-      // Optional rewards
+      // XP + Level-up
       attacker.experience += 15;
-      attacker.cash = parseFloat(attacker.cash) + 50.0;
 
-      // Save user updates
+      let leveledUp = false;
+      while (
+        attacker.level < 99 &&
+        attacker.experience >=
+          Math.floor(50 * Math.pow(attacker.level + 1, 1.5))
+      ) {
+        attacker.level += 1;
+        attacker.attack += 1;
+        attacker.defense += 1;
+        attacker.maxHealth += 10;
+        attacker.health = Math.min(attacker.health + 10, attacker.maxHealth);
+        leveledUp = true;
+      }
+
+      // Combat rewards
+      attacker.coins += 1;
+
       await attacker.save();
       await defender.save();
 
-      // Log outcome
+      combat.attackerXP = attacker.experience;
+      combat.defenderXP = defender.experience;
+
       combat.log.push({
         action: "defeat",
         defeated: defender.username,
         by: attacker.username,
-        time: new Date().toISOString(),
         xpEarned: 15,
-        cashEarned: 50,
+        coinsEarned: 1,
+        level: attacker.level,
+        time: new Date().toISOString(),
       });
+
+      if (leveledUp) {
+        combat.log.push({
+          action: "level-up",
+          user: attacker.username,
+          newLevel: attacker.level,
+          gainedStats: {
+            attack: "+1",
+            defense: "+1",
+            health: "+10",
+          },
+          time: new Date().toISOString(),
+        });
+      }
     }
 
     await combat.save();
 
+    const io = req.app.get("io");
+
+    if (combat.completed) {
+      // Notify both players that combat ended
+      io.to(`user:${attacker.id}`).emit("combatOver", {
+        winnerId: attacker.id,
+        loserId: defender.id,
+        rewards: { xp: 15, coins: 1 },
+      });
+
+      io.to(`user:${defender.id}`).emit("combatOver", {
+        winnerId: attacker.id,
+        loserId: defender.id,
+        wasDefeated: true,
+      });
+    }
+
     return res.json({
       message: `${attacker.username} attacked ${defender.username} for ${damage} damage!`,
       defenderHealth: defender.health,
+      attackerXP: attacker.experience,
+      attackerLevel: attacker.level,
     });
   } catch (error) {
     console.error("Attack Error:", error);
@@ -249,19 +301,40 @@ router.post("/use-item", requireAuth, async (req, res) => {
       },
     });
 
-    if (!combat)
-      return res.status(404).json({ message: "No active combat found." });
-
-    let actionMessage = "";
     const now = new Date().toISOString();
+    let actionMessage = "";
 
+    // OUT-OF-COMBAT HEALING SUPPORT
+    if (!combat && item.type === "potion") {
+      const healed = item.healAmount;
+      const prevHealth = user.health;
+      user.health = Math.min(user.health + healed, 100);
+      await user.save();
+
+      if (item.quantity > 1) {
+        item.quantity -= 1;
+        await item.save();
+      } else {
+        await item.destroy();
+      }
+
+      return res.json({
+        message: `You used ${item.name} and healed ${healed} HP (out of combat).`,
+        newHealth: user.health,
+      });
+    }
+
+    if (!combat) {
+      return res.status(404).json({ message: "No active combat found." });
+    }
+
+    //  Healing in combat
     if (item.type === "potion") {
       const healed = item.healAmount;
       const prevHealth = user.health;
       user.health = Math.min(user.health + healed, 100);
       await user.save();
 
-      // Log healing
       combat.log.push({
         action: "item-heal",
         user: user.username,
@@ -276,12 +349,13 @@ router.post("/use-item", requireAuth, async (req, res) => {
       else combat.defenderHP = user.health;
 
       actionMessage = `You used ${item.name} and healed ${healed} HP.`;
-    } else if (item.damage > 0) {
+    }
+    //  Damage items
+    else if (item.damage > 0) {
       const prevHealth = target.health;
       target.health = Math.max(0, target.health - item.damage);
       await target.save();
 
-      // Log attack item use
       combat.log.push({
         action: "item-attack",
         user: user.username,
@@ -297,7 +371,9 @@ router.post("/use-item", requireAuth, async (req, res) => {
       else combat.defenderHP = target.health;
 
       actionMessage = `You used ${item.name} and dealt ${item.damage} damage.`;
-    } else {
+    }
+    //  Unsupported item
+    else {
       return res
         .status(400)
         .json({ message: "This item cannot be used in combat." });

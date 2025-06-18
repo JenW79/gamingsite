@@ -15,12 +15,8 @@ export default function CombatModal({
   const [combatLog, setCombatLog] = useState([]);
   const [attackerHealth, setAttackerHealth] = useState(100);
   const [defenderHealth, setDefenderHealth] = useState(100);
+  const [xpThresholds, setXpThresholds] = useState([]);
   const socket = useRef(null);
-
-  console.log(
-    "🧪 VITE_SOCKET_URL at runtime:",
-    import.meta.env.VITE_SOCKET_URL
-  );
 
   useEffect(() => {
     socket.current = io(
@@ -40,12 +36,33 @@ export default function CombatModal({
       fightId,
     });
 
-    setCombatLog((log) => [...log, `You attacked ${defender.username}!`]);
+    setCombatLog((log) => [
+      ...log,
+      `Engaged combat with ${defender.username}!`,
+    ]);
 
     return () => {
       socket.current?.disconnect();
     };
   }, [attacker.id, defender.id, defender.username]);
+
+  useEffect(() => {
+    const fetchThresholds = async () => {
+      const res = await fetch("/api/levels");
+      const data = await res.json();
+      setXpThresholds(data.thresholds);
+    };
+    fetchThresholds();
+  }, []);
+
+  const level = attacker.level || 1;
+  const currentXP = attacker.experience || 0;
+  const nextLevelXP = xpThresholds[level + 1] || 1;
+  const prevLevelXP = xpThresholds[level] || 0;
+  const xpProgress = Math.min(
+    100,
+    Math.floor(((currentXP - prevLevelXP) / (nextLevelXP - prevLevelXP)) * 100)
+  );
 
   useEffect(() => {
     const loadCombat = async () => {
@@ -163,6 +180,11 @@ export default function CombatModal({
         setCombatLog((log) => [...log, data.message]);
       }
 
+      if (data.combatCompleted) {
+        dispatch(fetchGameData(attacker.id));
+        setCombatLog((log) => [...log, "🏆 Combat completed. Rewards earned!"]);
+      }
+
       socket.current.emit("attackMove", {
         attackerId: attacker.id,
         defenderId: defender.id,
@@ -208,6 +230,10 @@ export default function CombatModal({
       const data = await res.json();
       setCombatLog((log) => [...log, data.message]);
 
+      if (data.newHealth !== undefined) {
+        setAttackerHealth(data.newHealth);
+      }
+
       if (data.updatedCombat) {
         const isAttacker = data.updatedCombat.attackerId === attacker.id;
         setAttackerHealth(
@@ -247,7 +273,7 @@ export default function CombatModal({
                   <img
                     src={p.avatarUrl}
                     alt={p.username}
-                    className="combat-avatar"
+                    className={`combat-avatar ${hp === 0 ? "knocked-out" : ""}`}
                     onError={(e) => (e.target.src = "/default-avatar.png")}
                   />
                 ) : (
@@ -257,6 +283,7 @@ export default function CombatModal({
                     className="combat-avatar"
                   />
                 )}
+                <p>Level: {p.level}</p>
                 <div className="hp-bar">
                   <div
                     className="hp-fill"
@@ -269,18 +296,28 @@ export default function CombatModal({
                 <p>
                   {p.username}: {hp}/100 HP
                 </p>
+                <p>
+                  XP: {currentXP} / {nextLevelXP}
+                </p>
+                <div className="xp-bar">
+                  <div
+                    className="xp-fill"
+                    style={{ width: `${xpProgress}%` }}
+                  />
+                </div>
               </div>
             );
           })}
         </div>
 
         <div className="combat-controls">
-          <button onClick={handleAttack} disabled={defenderHealth === 0}>
+          <button
+            onClick={handleAttack}
+            disabled={attackerHealth === 0 || defenderHealth === 0}
+          >
             Attack
           </button>
-          <button onClick={handleManualHeal} disabled={attackerHealth === 0}>
-            Heal
-          </button>
+          <button onClick={handleManualHeal}>Heal</button>
         </div>
 
         {inventory?.length > 0 && (
@@ -293,12 +330,18 @@ export default function CombatModal({
                   <button
                     key={item.id}
                     onClick={() => handleUseItem(item.id)}
-                    disabled={attackerHealth === 0 || item.quantity <= 0}
+                    disabled={item.quantity <= 0}
                     className="combat-item-button"
                   >
                     {item.name} ({item.quantity})
                   </button>
                 ))}
+
+              {attackerHealth === 0 && (
+                <p className="combat-warning">
+                  💀 You're knocked out! Heal or use a potion to recover.
+                </p>
+              )}
             </div>
           </div>
         )}
