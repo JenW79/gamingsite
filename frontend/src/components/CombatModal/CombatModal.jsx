@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { fetchGameData } from "../../store/game";
 import { csrfFetch } from "../../store/csrf";
 import "./CombatModal.css";
@@ -16,6 +16,26 @@ export default function CombatModal({
   const [attackerHealth, setAttackerHealth] = useState(100);
   const [defenderHealth, setDefenderHealth] = useState(100);
   const [xpThresholds, setXpThresholds] = useState([]);
+  const gameStats = useSelector((state) => state.game.stats);
+  const logRef = useRef(null);
+
+  const MAX_LOG_ENTRIES = 20;
+
+  const log = (entry) => {
+    setCombatLog((prev) => {
+      const updated = [...prev, entry].slice(-MAX_LOG_ENTRIES);
+
+      // auto-scroll after state updates (next tick)
+      setTimeout(() => {
+        if (logRef.current) {
+          logRef.current.scrollTop = logRef.current.scrollHeight;
+        }
+      }, 0);
+
+      return updated;
+    });
+  };
+
   const socket = useRef(null);
 
   useEffect(() => {
@@ -36,10 +56,7 @@ export default function CombatModal({
       fightId,
     });
 
-    setCombatLog((log) => [
-      ...log,
-      `Engaged combat with ${defender.username}!`,
-    ]);
+    log(`Engaged combat with ${defender.username}!`);
 
     return () => {
       socket.current?.disconnect();
@@ -55,10 +72,11 @@ export default function CombatModal({
     fetchThresholds();
   }, []);
 
-  const level = attacker.level || 1;
-  const currentXP = attacker.experience || 0;
-  const nextLevelXP = xpThresholds[level + 1] || 1;
+  const level = gameStats.level || 1;
+  const currentXP = gameStats.experience || 0;
   const prevLevelXP = xpThresholds[level] || 0;
+  const nextLevelXP = xpThresholds[level + 1] ?? prevLevelXP + 100;
+
   const xpProgress = Math.min(
     100,
     Math.floor(((currentXP - prevLevelXP) / (nextLevelXP - prevLevelXP)) * 100)
@@ -76,7 +94,7 @@ export default function CombatModal({
 
         setAttackerHealth(savedAttackerHP);
         setDefenderHealth(savedDefenderHP);
-        setCombatLog((log) => [...log, "Resumed existing combat."]);
+        log("Resumed existing combat.");
       } catch {
         console.log("No active combat found.");
         setAttackerHealth(attacker.health ?? 100);
@@ -87,10 +105,7 @@ export default function CombatModal({
           const health = profileData.health ?? 100;
           setDefenderHealth(health);
           if (health <= 0) {
-            setCombatLog((log) => [
-              ...log,
-              `${profileData.username} is already defeated.`,
-            ]);
+            log(`${profileData.username} is already defeated.`);
           }
         } catch (fallbackErr) {
           console.error(
@@ -106,61 +121,80 @@ export default function CombatModal({
   }, [attacker.id, attacker.health, defender.id]);
 
   useEffect(() => {
-    const s = socket.current;
-    if (!s) return;
+  const s = socket.current;
+  if (!s) return;
 
-    const log = (entry) => setCombatLog((prev) => [...prev, entry]);
+  const handleFightRequested = ({ attackerId }) =>
+    log(`Player ${attackerId} started a fight!`);
 
-    s.on("fightRequested", ({ attackerId }) => {
-      log(`Player ${attackerId} started a fight!`);
-    });
+  const handleReceiveAttack = ({ damage, attackerId }) => {
+    const effectiveDefense = attacker.defense ?? 0;
+    const mitigated = damage - effectiveDefense * 0.2;
+    const finalDamage = Math.max(1, Math.floor(mitigated));
+    setAttackerHealth((hp) => Math.max(0, hp - finalDamage));
+    log(`You took ${finalDamage} damage from Player ${attackerId}`);
+  };
 
-    s.on("receiveAttack", ({ damage, attackerId }) => {
-      const effectiveDefense = attacker.defense ?? 0;
-      const mitigated = damage - effectiveDefense * 0.2;
-      const finalDamage = Math.max(1, Math.floor(mitigated));
-      setAttackerHealth((hp) => Math.max(0, hp - finalDamage));
-      log(`You took ${finalDamage} damage from Player ${attackerId}`);
-    });
+  const handleReceiveHeal = ({ healAmount }) => {
+    setDefenderHealth((hp) => Math.min(100, hp + healAmount));
+    log(`Opponent healed for ${healAmount} HP.`);
+  };
 
-    s.on("receiveHeal", ({ healAmount }) => {
-      setDefenderHealth((hp) => Math.min(100, hp + healAmount));
-      log(`Opponent healed for ${healAmount} HP.`);
-    });
+  const handleAttackConfirmed = ({ damage }) => {
+    setDefenderHealth((hp) => Math.max(0, hp - damage));
+    log(`You dealt ${damage} damage to ${defender.username}`);
+  };
 
-    s.on("attackConfirmed", ({ damage }) => {
-      setDefenderHealth((hp) => Math.max(0, hp - damage));
-      log(`You dealt ${damage} damage to ${defender.username}`);
-    });
+  const handleManualHealConfirmed = ({ healAmount }) => {
+    setAttackerHealth((hp) => Math.min(100, hp + healAmount));
+    log(`You successfully recovered ${healAmount} HP.`);
+  };
 
-    s.on("manualHealConfirmed", ({ healAmount }) => {
-      setAttackerHealth((hp) => Math.min(100, hp + healAmount));
-      log(`You successfully recovered ${healAmount} HP.`);
-    });
+  const handleOpponentHealed = ({ healAmount }) => {
+    setDefenderHealth((hp) => Math.min(100, hp + healAmount));
+    log(`Opponent healed for ${healAmount} HP.`);
+  };
 
-    s.on("opponentHealed", ({ healAmount }) => {
-      setDefenderHealth((hp) => Math.min(100, hp + healAmount));
-      log(`Opponent healed for ${healAmount} HP.`);
-    });
+  const handleCombatOver = ({ winnerId, rewards }) => {
+    if (attacker.id === winnerId) {
+      alert(`🏆 You won the battle! +${rewards.xp} XP, +${rewards.coins} coins`);
+    } else {
+      log("💀 You were defeated.");
+    }
 
-    return () => {
-      s.off("fightRequested");
-      s.off("receiveAttack");
-      s.off("receiveHeal");
-      s.off("attackConfirmed");
-      s.off("manualHealConfirmed");
-      s.off("opponentHealed");
-    };
-  }, [attacker.defense, defender.username]);
+    dispatch(fetchGameData(attacker.id));
+  };
+
+  s.on("fightRequested", handleFightRequested);
+  s.on("receiveAttack", handleReceiveAttack);
+  s.on("receiveHeal", handleReceiveHeal);
+  s.on("attackConfirmed", handleAttackConfirmed);
+  s.on("manualHealConfirmed", handleManualHealConfirmed);
+  s.on("opponentHealed", handleOpponentHealed);
+  s.on("combatOver", handleCombatOver);
+
+  return () => {
+    s.off("fightRequested", handleFightRequested);
+    s.off("receiveAttack", handleReceiveAttack);
+    s.off("receiveHeal", handleReceiveHeal);
+    s.off("attackConfirmed", handleAttackConfirmed);
+    s.off("manualHealConfirmed", handleManualHealConfirmed);
+    s.off("opponentHealed", handleOpponentHealed);
+    s.off("combatOver", handleCombatOver);
+  };
+}, [attacker.id, attacker.defense, defender.username, dispatch]);
+
 
   const handleAttack = async () => {
-    if (defenderHealth <= 0)
-      return setCombatLog((log) => [
-        ...log,
-        `${defender.username} is already defeated.`,
-      ]);
-    if (attackerHealth <= 0)
-      return setCombatLog((log) => [...log, "You're too weak to fight!"]);
+    if (defenderHealth <= 0) {
+      log(`${defender.username} is already defeated.`);
+      return;
+    }
+
+    if (attackerHealth <= 0) {
+      log("You're too weak to fight!");
+      return;
+    }
 
     const baseDamage = attacker.attack ?? 5;
     const defense = defender.defense ?? 0;
@@ -177,12 +211,30 @@ export default function CombatModal({
       const data = await response.json();
       if (data.defenderHealth !== undefined) {
         setDefenderHealth(data.defenderHealth);
-        setCombatLog((log) => [...log, data.message]);
+        log(data.message);
       }
 
-      if (data.combatCompleted) {
-        dispatch(fetchGameData(attacker.id));
-        setCombatLog((log) => [...log, "🏆 Combat completed. Rewards earned!"]);
+      if (data.defenderHealth !== undefined) {
+        setDefenderHealth(data.defenderHealth);
+        log(data.message);
+
+        // ✅ Immediately check if defeated (even if server lags on `combatCompleted`)
+        if (data.defenderHealth <= 0) {
+          log(`💥 ${defender.username} has been defeated!`);
+
+          // force fetch game data update
+          setTimeout(() => {
+            dispatch(fetchGameData(attacker.id));
+          }, 500);
+
+          if (data.attackerXP && data.attackerLevel && data.combatCompleted) {
+            alert(
+              `🏅 Victory!\nXP: ${data.attackerXP}\nLevel: ${data.attackerLevel}\nCoins: +1`
+            );
+          } else {
+            alert("🏅 Victory! Stats will update shortly.");
+          }
+        }
       }
 
       socket.current.emit("attackMove", {
@@ -193,7 +245,7 @@ export default function CombatModal({
     } catch (error) {
       const errData = await error.json();
       const fallback = "Attack failed.";
-      setCombatLog((log) => [...log, errData.message || fallback]);
+      log(errData.message || fallback);
     }
   };
 
@@ -206,7 +258,8 @@ export default function CombatModal({
 
       const data = await res.json();
       setAttackerHealth(data.newHealth);
-      setCombatLog((log) => [...log, data.message]);
+      dispatch(fetchGameData(attacker.id));
+      log(data.message);
 
       socket.current.emit("healMove", {
         userId: attacker.id,
@@ -216,7 +269,7 @@ export default function CombatModal({
       });
     } catch (err) {
       console.error("Manual heal failed:", err);
-      setCombatLog((log) => [...log, "Healing failed."]);
+      log("Healing failed.");
     }
   };
 
@@ -228,7 +281,7 @@ export default function CombatModal({
       });
 
       const data = await res.json();
-      setCombatLog((log) => [...log, data.message]);
+      log(data.message);
 
       if (data.newHealth !== undefined) {
         setAttackerHealth(data.newHealth);
@@ -251,7 +304,7 @@ export default function CombatModal({
       dispatch(fetchGameData(attacker.id));
     } catch (err) {
       console.error("Item use failed:", err);
-      setCombatLog((log) => [...log, "Failed to use item."]);
+      log("Failed to use item.");
     }
   };
 
@@ -267,6 +320,7 @@ export default function CombatModal({
           {[attacker, defender].map((p, idx) => {
             const isAttacker = idx === 0;
             const hp = isAttacker ? attackerHealth : defenderHealth;
+
             return (
               <div key={p.id} className="combat-player">
                 {p.avatarUrl && p.avatarUrl.startsWith("http") ? (
@@ -296,15 +350,19 @@ export default function CombatModal({
                 <p>
                   {p.username}: {hp}/100 HP
                 </p>
-                <p>
-                  XP: {currentXP} / {nextLevelXP}
-                </p>
-                <div className="xp-bar">
-                  <div
-                    className="xp-fill"
-                    style={{ width: `${xpProgress}%` }}
-                  />
-                </div>
+                {isAttacker && (
+                  <>
+                    <p>
+                      XP: {currentXP} / {nextLevelXP}
+                    </p>
+                    <div className="xp-bar">
+                      <div
+                        className="xp-fill"
+                        style={{ width: `${xpProgress}%` }}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             );
           })}
@@ -346,7 +404,7 @@ export default function CombatModal({
           </div>
         )}
 
-        <div className="combat-log">
+        <div className="combat-log" ref={logRef}>
           <h4>Battle Log</h4>
           <ul>
             {combatLog.map((entry, i) => (

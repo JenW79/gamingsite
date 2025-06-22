@@ -90,55 +90,69 @@ router.post("/attack", requireAuth, async (req, res) => {
       },
     ];
 
-    // If defender is defeated
+    // Determine if someone won
+    let winner = null;
+    let loser = null;
+
     if (defender.health <= 0) {
+      winner = attacker;
+      loser = defender;
+    } else if (attacker.health <= 0) {
+      winner = defender;
+      loser = attacker;
+    }
+
+    if (winner && loser) {
       combat.completed = true;
 
-      // Win/loss
-      attacker.wins += 1;
-      defender.losses += 1;
+      winner.wins += 1;
+      loser.losses += 1;
 
-      // XP + Level-up
-      attacker.experience += 15;
+      // XP and level-up for winner ONLY
+      winner.experience += 15;
 
       let leveledUp = false;
       while (
-        attacker.level < 99 &&
-        attacker.experience >=
-          Math.floor(50 * Math.pow(attacker.level + 1, 1.5))
+        winner.level < 99 &&
+        winner.experience >= Math.floor(50 * Math.pow(winner.level + 1, 1.5))
       ) {
-        attacker.level += 1;
-        attacker.attack += 1;
-        attacker.defense += 1;
-        attacker.maxHealth += 10;
-        attacker.health = Math.min(attacker.health + 10, attacker.maxHealth);
+        winner.level += 1;
+        winner.attack += 1;
+        winner.defense += 1;
+        winner.maxHealth += 10;
+        winner.health = Math.min(winner.health + 10, winner.maxHealth);
         leveledUp = true;
       }
 
-      // Combat rewards
-      attacker.coins += 1;
+      winner.coins += 1;
 
-      await attacker.save();
-      await defender.save();
+      await winner.save();
+      await loser.save();
 
-      combat.attackerXP = attacker.experience;
-      combat.defenderXP = defender.experience;
+      combat.attackerXP =
+        combat.attackerId === winner.id
+          ? winner.experience
+          : attacker.experience;
+      combat.defenderXP =
+        combat.defenderId === winner.id
+          ? winner.experience
+          : defender.experience;
 
       combat.log.push({
         action: "defeat",
-        defeated: defender.username,
-        by: attacker.username,
+        defeated: loser.username,
+        by: winner.username,
         xpEarned: 15,
         coinsEarned: 1,
-        level: attacker.level,
+        level: winner.level,
         time: new Date().toISOString(),
       });
 
       if (leveledUp) {
         combat.log.push({
           action: "level-up",
-          user: attacker.username,
-          newLevel: attacker.level,
+          user: winner.username,
+          newLevel: winner.level,
           gainedStats: {
             attack: "+1",
             defense: "+1",
@@ -147,23 +161,19 @@ router.post("/attack", requireAuth, async (req, res) => {
           time: new Date().toISOString(),
         });
       }
-    }
 
-    await combat.save();
+      await combat.save();
 
-    const io = req.app.get("io");
-
-    if (combat.completed) {
-      // Notify both players that combat ended
-      io.to(`user:${attacker.id}`).emit("combatOver", {
-        winnerId: attacker.id,
-        loserId: defender.id,
+      const io = req.app.get("io");
+      io.to(`user:${winner.id}`).emit("combatOver", {
+        winnerId: winner.id,
+        loserId: loser.id,
         rewards: { xp: 15, coins: 1 },
       });
 
-      io.to(`user:${defender.id}`).emit("combatOver", {
-        winnerId: attacker.id,
-        loserId: defender.id,
+      io.to(`user:${loser.id}`).emit("combatOver", {
+        winnerId: winner.id,
+        loserId: loser.id,
         wasDefeated: true,
       });
     }
@@ -173,6 +183,14 @@ router.post("/attack", requireAuth, async (req, res) => {
       defenderHealth: defender.health,
       attackerXP: attacker.experience,
       attackerLevel: attacker.level,
+      combatCompleted: combat.completed,
+      updatedStats: winner
+        ? {
+            experience: winner.experience,
+            level: winner.level,
+            coins: winner.coins,
+          }
+        : null,
     });
   } catch (error) {
     console.error("Attack Error:", error);
@@ -198,12 +216,26 @@ router.get("/:userId", async (req, res) => {
         {
           model: User,
           as: "attacker",
-          attributes: ["id", "username", "avatarUrl", "health"],
+          attributes: [
+            "id",
+            "username",
+            "avatarUrl",
+            "health",
+            "level",
+            "experience",
+          ],
         },
         {
           model: User,
           as: "defender",
-          attributes: ["id", "username", "avatarUrl", "health"],
+          attributes: [
+            "id",
+            "username",
+            "avatarUrl",
+            "health",
+            "level",
+            "experience",
+          ],
         },
       ],
     });

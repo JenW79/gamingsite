@@ -39,6 +39,9 @@ const initialState = {
     defense: 3,
     energy: 100,
     coins: 50,
+    level: 1,
+    experience: 0,
+    maxHealth: 100,
   },
   inventory: [],
 };

@@ -18,6 +18,7 @@ router.get("/:userId", requireAuth, async (req, res, next) => {
         "health",
         "attack",
         "defense",
+        "maxHealth",
       ],
     });
 
