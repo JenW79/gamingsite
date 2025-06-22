@@ -179,9 +179,17 @@ function ProfileEditPage() {
       <form
         onSubmit={async (e) => {
           e.preventDefault();
+          const csrfToken = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("XSRF-TOKEN="))
+            ?.split("=")[1];
+
           const res = await fetch("/api/users/change-password", {
             method: "PATCH",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": csrfToken, // ⬅️ This is essential
+            },
             credentials: "include",
             body: JSON.stringify({
               currentPassword,
