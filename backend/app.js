@@ -71,25 +71,37 @@ app.use(
   })
 );
 
-// ✅ Apply CSRF Protection Middleware BEFORE Routes
-app.use(
-  csurf({
+//  Apply CSRF Protection Middleware BEFORE Routes
+const csrfExcludedPaths = [
+  "/api/users/forgot-password",
+  /^\/api\/users\/reset-password\/[^/]+$/
+];
+
+app.use((req, res, next) => {
+  const shouldSkip = csrfExcludedPaths.some((path) =>
+    path instanceof RegExp ? path.test(req.path) : req.path === path
+  );
+
+  if (shouldSkip) return next();
+
+  return csurf({
     cookie: {
       secure: isProduction,
       sameSite: isProduction ? "Lax" : "Strict",
-      httpOnly: true, // ✅ Ensure CSRF cookie is HTTP-only
+      httpOnly: true,
     },
-  })
-);
+  })(req, res, next);
+});
 
-// ✅ CSRF Token Route (AFTER csurf middleware)
+
+//  CSRF Token Route (AFTER csurf middleware)
 app.get("/api/csrf/restore", (req, res) => {
   try {
     const csrfToken = req.csrfToken();
     res.cookie("XSRF-TOKEN", csrfToken, {
       secure: isProduction,
       sameSite: isProduction ? "Lax" : "Strict",
-      httpOnly: false, // ✅ Allows frontend to access it
+      httpOnly: false, //  Allows frontend to access it
     });
     return res.json({ csrfToken });
   } catch (error) {
@@ -98,7 +110,7 @@ app.get("/api/csrf/restore", (req, res) => {
   }
 });
 
-// ✅ Attach API Routes AFTER CSRF Middleware
+//  Attach API Routes AFTER CSRF Middleware
 app.use(routes);
 
 const path = require("path");
@@ -110,7 +122,7 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
-// ✅ Error Handling Middleware
+//  Error Handling Middleware
 app.use((_req, _res, next) => {
   const err = new Error("The requested resource couldn't be found.");
   err.title = "Resource Not Found";
@@ -119,7 +131,7 @@ app.use((_req, _res, next) => {
   next(err);
 });
 
-// ✅ Process Sequelize Errors
+// Process Sequelize Errors
 app.use((err, _req, _res, next) => {
   if (err instanceof ValidationError) {
     let errors = {};
@@ -132,7 +144,7 @@ app.use((err, _req, _res, next) => {
   next(err);
 });
 
-// ✅ Final Error Formatter
+//  Final Error Formatter
 app.use((err, _req, res, _next) => {
   res.status(err.status || 500);
   res.json({
