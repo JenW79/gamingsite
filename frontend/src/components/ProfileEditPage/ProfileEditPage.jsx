@@ -17,6 +17,8 @@ function ProfileEditPage() {
   const [relationshipStatus, setRelationshipStatus] = useState("");
   const [message, setMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -172,6 +174,44 @@ function ProfileEditPage() {
         <button type="submit" disabled={isUploading}>
           {isUploading ? "Uploading..." : "Save Changes"}
         </button>
+      </form>
+      <h3 style={{ marginTop: "2rem" }}>Change Password</h3>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const res = await fetch("/api/users/change-password", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              currentPassword,
+              newPassword,
+            }),
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            setMessage("✅ Password updated successfully");
+          } else {
+            setMessage(data.message || "❌ Failed to update password");
+          }
+        }}
+      >
+        <label>Current Password:</label>
+        <input
+          type="password"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          required
+        />
+        <label>New Password:</label>
+        <input
+          type="password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          required
+        />
+        <button type="submit">Change Password</button>
       </form>
     </div>
   );

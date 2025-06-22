@@ -122,12 +122,24 @@ router.post('/forgot-password', async (req, res) => {
   const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '15m' });
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: user.email,
-    subject: 'Reset your password',
-    html: `<p>Click the link to reset your password:</p><a href="${resetUrl}">${resetUrl}</a>`,
-  });
+ await transporter.sendMail({
+  from: `"Game Me Support" <${process.env.EMAIL_USER}>`,
+  to: user.email,
+  subject: 'Reset Your Game Me Password',
+  html: `
+    <div style="font-family: Arial, sans-serif; background: #1e1e1e; color: #f1f1f1; padding: 20px; border-radius: 8px;">
+      <h2 style="color: #ff4c68;">Reset Your Password</h2>
+      <p>Hello ${user.username},</p>
+      <p>We received a request to reset the password for your <strong>Game Me</strong> account.</p>
+      <p>Click the button below to choose a new password:</p>
+      <a href="${resetUrl}" style="display: inline-block; background-color: #ff4c68; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold;">
+        Reset Password
+      </a>
+      <p style="margin-top: 16px;">If you did not request this, you can safely ignore this email.</p>
+      <p style="font-size: 0.9rem; color: #aaa;">This link will expire in 15 minutes.</p>
+    </div>
+  `,
+});
 
   return res.json({ message: 'If that email exists, a reset link was sent.' });
 });

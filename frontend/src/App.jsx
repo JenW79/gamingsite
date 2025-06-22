@@ -12,6 +12,8 @@ import ChatPage from "./components/ChatPage/ChatPage";
 import StorePage from "./components/StorePage/StorePage";
 import DMModal from "./components/DMModal/DMModal";
 import PlayerDirectory from "./components/PlayerDirectory/PlayerDirectory";
+import ResetPasswordPage from "./components/ResetPasswordPage/ResetPasswordPage";
+import ForgotPasswordModal from "./components/ForgotPasswordModal/ForgotPasswordModal";
 import { fetchProfiles } from "./store/profiles";
 
 function Layout() {
@@ -49,6 +51,8 @@ const router = createBrowserRouter([
       { path: "/directory", element: <PlayerDirectory />},
       { path: "/chat", element: <ChatPage /> },
       { path: "store", element: <StorePage /> },
+      { path: "/reset-password/:token", element: <ResetPasswordPage /> },
+      { path: "forgot-password", element: <ForgotPasswordModal /> },
     ],
   },
 ]);

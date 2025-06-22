@@ -1,14 +1,16 @@
-import { useState } from 'react';
-import * as sessionActions from '../../store/session';
-import { useDispatch } from 'react-redux';
-import { useModal } from '../../context/Modal';
-import "./LoginForm.css"; 
+import { useState } from "react";
+import * as sessionActions from "../../store/session";
+import { useDispatch } from "react-redux";
+import { useModal} from "../../context/Modal";
+import ForgotPasswordModal from "../ForgotPasswordModal/ForgotPasswordModal";
+import "./LoginForm.css";
 
 function LoginFormModal() {
   const dispatch = useDispatch();
   const [credential, setCredential] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
+  const { setModalContent } = useModal();
   const { closeModal } = useModal();
 
   const handleSubmit = (e) => {
@@ -33,7 +35,6 @@ function LoginFormModal() {
     <div className="login-form-container">
       <h1>Log In</h1>
       <form onSubmit={handleSubmit} className="login-form">
-        
         <input
           type="text"
           value={credential}
@@ -50,19 +51,30 @@ function LoginFormModal() {
           placeholder="Password"
         />
 
-        {errors.credential && <p className="error-message">{errors.credential}</p>}
+        {errors.credential && (
+          <p className="error-message">{errors.credential}</p>
+        )}
 
-        <button 
-  type="submit" 
-  className={`login-button ${credential.length < 4 || password.length < 6 ? "disabled-login" : ""}`} 
-  disabled={credential.length < 4 || password.length < 6}
->
-  Log In
-</button>
-
+        <button
+          type="submit"
+          className={`login-button ${
+            credential.length < 4 || password.length < 6 ? "disabled-login" : ""
+          }`}
+          disabled={credential.length < 4 || password.length < 6}
+        >
+          Log In
+        </button>
+        <p
+          className="forgot-password-link"
+          onClick={() => {
+            closeModal();
+            setTimeout(() => setModalContent(<ForgotPasswordModal />), 250);
+          }}
+        >
+          Forgot Password?
+        </p>
       </form>
 
-     
       {/* <p className="demo-user-text" onClick={loginAsDemoUser}>
        Log in as Demo User
       </p> */}
@@ -71,4 +83,3 @@ function LoginFormModal() {
 }
 
 export default LoginFormModal;
-
