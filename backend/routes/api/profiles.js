@@ -28,7 +28,6 @@ router.get("/:userId", async (req, res, next) => {
       attributes: [
         "id",
         "username",
-        "email",
         "avatarUrl",
         "location",
         "age",
