@@ -165,6 +165,22 @@ export default function CombatModal({
     dispatch(fetchGameData(attacker.id));
   };
 
+  const handleCombatStateUpdate = ({
+  attackerId: socketAttackerId,
+  attackerHP,
+  defenderHP,
+}) => {
+  if (attacker.id === socketAttackerId) {
+    setAttackerHealth(attackerHP);
+    setDefenderHealth(defenderHP);
+  } else {
+    setAttackerHealth(defenderHP); // flipped for defender's view
+    setDefenderHealth(attackerHP);
+  }
+
+  dispatch(fetchGameData(attacker.id));
+};
+
   s.on("fightRequested", handleFightRequested);
   s.on("receiveAttack", handleReceiveAttack);
   s.on("receiveHeal", handleReceiveHeal);
@@ -172,6 +188,7 @@ export default function CombatModal({
   s.on("manualHealConfirmed", handleManualHealConfirmed);
   s.on("opponentHealed", handleOpponentHealed);
   s.on("combatOver", handleCombatOver);
+  s.on("combatStateUpdate", handleCombatStateUpdate);
 
   return () => {
     s.off("fightRequested", handleFightRequested);
@@ -181,8 +198,10 @@ export default function CombatModal({
     s.off("manualHealConfirmed", handleManualHealConfirmed);
     s.off("opponentHealed", handleOpponentHealed);
     s.off("combatOver", handleCombatOver);
+    s.off("combatStateUpdate", handleCombatStateUpdate);
   };
 }, [attacker.id, attacker.defense, defender.username, dispatch]);
+
 
 
   const handleAttack = async () => {

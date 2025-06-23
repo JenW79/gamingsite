@@ -176,6 +176,19 @@ router.post("/attack", requireAuth, async (req, res) => {
         loserId: loser.id,
         wasDefeated: true,
       });
+      io.to(`user:${attackerId}`).emit("combatStateUpdate", {
+        attackerId: attacker.id,
+        attackerHP: attacker.health,
+        defenderId: defender.id,
+        defenderHP: defender.health,
+      });
+
+      io.to(`user:${defenderId}`).emit("combatStateUpdate", {
+        attackerId: attacker.id,
+        attackerHP: attacker.health,
+        defenderId: defender.id,
+        defenderHP: defender.health,
+      });
     }
 
     return res.json({
