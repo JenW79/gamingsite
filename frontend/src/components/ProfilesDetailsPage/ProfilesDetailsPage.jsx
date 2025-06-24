@@ -60,7 +60,9 @@ function ProfileDetailPage() {
         </div>
         <div className="profile-info">
           <h2>{profile.username}</h2>
-          <p>Email: {profile.email}</p>
+          {currentUser?.id === parseInt(userId) && (
+            <p>Email: {profile.email}</p>
+          )}
           <p>Location: {profile.location || "Not specified"}</p>
           <p>Age: {profile.age || "Not specified"}</p>
           <p>Sex: {profile.sex || "Not specified"}</p>

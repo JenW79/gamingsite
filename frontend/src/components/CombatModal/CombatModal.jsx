@@ -121,88 +121,99 @@ export default function CombatModal({
   }, [attacker.id, attacker.health, defender.id]);
 
   useEffect(() => {
-  const s = socket.current;
-  if (!s) return;
+    const s = socket.current;
+    if (!s) return;
 
-  const handleFightRequested = ({ attackerId }) =>
-    log(`Player ${attackerId} started a fight!`);
+    const handleFightRequested = ({ attackerId }) =>
+      log(`Player ${attackerId} started a fight!`);
 
-  const handleReceiveAttack = ({ damage, attackerId }) => {
-    const effectiveDefense = attacker.defense ?? 0;
-    const mitigated = damage - effectiveDefense * 0.2;
-    const finalDamage = Math.max(1, Math.floor(mitigated));
-    setAttackerHealth((hp) => Math.max(0, hp - finalDamage));
-    log(`You took ${finalDamage} damage from Player ${attackerId}`);
-  };
+    const handleReceiveAttack = ({ damage, attackerId }) => {
+      const effectiveDefense = attacker.defense ?? 0;
+      const mitigated = damage - effectiveDefense * 0.2;
+      const finalDamage = Math.max(1, Math.floor(mitigated));
+      setAttackerHealth((hp) => Math.max(0, hp - finalDamage));
+      log(`You took ${finalDamage} damage from Player ${attackerId}`);
+    };
 
-  const handleReceiveHeal = ({ healAmount }) => {
-    setDefenderHealth((hp) => Math.min(100, hp + healAmount));
-    log(`Opponent healed for ${healAmount} HP.`);
-  };
+    const handleReceiveHeal = ({ healAmount }) => {
+      setDefenderHealth((hp) => Math.min(100, hp + healAmount));
+      log(`Opponent healed for ${healAmount} HP.`);
+    };
 
-  const handleAttackConfirmed = ({ damage }) => {
-    setDefenderHealth((hp) => Math.max(0, hp - damage));
-    log(`You dealt ${damage} damage to ${defender.username}`);
-  };
+    const handleAttackConfirmed = ({ damage }) => {
+      setDefenderHealth((hp) => Math.max(0, hp - damage));
+      log(`You dealt ${damage} damage to ${defender.username}`);
+    };
 
-  const handleManualHealConfirmed = ({ healAmount }) => {
-    setAttackerHealth((hp) => Math.min(100, hp + healAmount));
-    log(`You successfully recovered ${healAmount} HP.`);
-  };
+    const handleManualHealConfirmed = ({ healAmount }) => {
+      setAttackerHealth((hp) => Math.min(100, hp + healAmount));
+      log(`You successfully recovered ${healAmount} HP.`);
+    };
 
-  const handleOpponentHealed = ({ healAmount }) => {
-    setDefenderHealth((hp) => Math.min(100, hp + healAmount));
-    log(`Opponent healed for ${healAmount} HP.`);
-  };
+    const handleOpponentHealed = ({ healAmount }) => {
+      setDefenderHealth((hp) => Math.min(100, hp + healAmount));
+      log(`Opponent healed for ${healAmount} HP.`);
+    };
 
-  const handleCombatOver = ({ winnerId, rewards }) => {
-    if (attacker.id === winnerId) {
-      alert(`🏆 You won the battle! +${rewards.xp} XP, +${rewards.coins} coins`);
-    } else {
-      log("💀 You were defeated.");
-    }
+    const handleCombatOver = ({ winnerId, rewards }) => {
+      if (attacker.id === winnerId) {
+        alert(
+          `🏆 You won the battle! +${rewards.xp} XP, +${rewards.coins} coins`
+        );
+      } else {
+        log("💀 You were defeated.");
+      }
 
-    dispatch(fetchGameData(attacker.id));
-  };
+      dispatch(fetchGameData(attacker.id));
+    };
 
-  const handleCombatStateUpdate = ({
-  attackerId: socketAttackerId,
-  attackerHP,
-  defenderHP,
-}) => {
-  if (attacker.id === socketAttackerId) {
-    setAttackerHealth(attackerHP);
-    setDefenderHealth(defenderHP);
-  } else {
-    setAttackerHealth(defenderHP); // flipped for defender's view
-    setDefenderHealth(attackerHP);
-  }
+    const handleCombatStateUpdate = ({
+      attackerId: socketAttackerId,
+      attackerHP,
+      defenderId: socketDefenderId,
+      defenderHP,
+    }) => {
+      if (socketDefenderId === null) {
+        // Manual heal outside combat
+        if (attacker.id === socketAttackerId) {
+          setAttackerHealth(attackerHP);
+          dispatch(fetchGameData(attacker.id));
+        }
+        return;
+      }
 
-  dispatch(fetchGameData(attacker.id));
-};
+      // In-combat updates
+      if (attacker.id === socketAttackerId) {
+        setAttackerHealth(attackerHP);
+        setDefenderHealth(defenderHP);
+      } else {
+        setAttackerHealth(defenderHP); // flipped for defender's view
+        setDefenderHealth(attackerHP);
+      }
 
-  s.on("fightRequested", handleFightRequested);
-  s.on("receiveAttack", handleReceiveAttack);
-  s.on("receiveHeal", handleReceiveHeal);
-  s.on("attackConfirmed", handleAttackConfirmed);
-  s.on("manualHealConfirmed", handleManualHealConfirmed);
-  s.on("opponentHealed", handleOpponentHealed);
-  s.on("combatOver", handleCombatOver);
-  s.on("combatStateUpdate", handleCombatStateUpdate);
+      dispatch(fetchGameData(attacker.id));
+    };
 
-  return () => {
-    s.off("fightRequested", handleFightRequested);
-    s.off("receiveAttack", handleReceiveAttack);
-    s.off("receiveHeal", handleReceiveHeal);
-    s.off("attackConfirmed", handleAttackConfirmed);
-    s.off("manualHealConfirmed", handleManualHealConfirmed);
-    s.off("opponentHealed", handleOpponentHealed);
-    s.off("combatOver", handleCombatOver);
-    s.off("combatStateUpdate", handleCombatStateUpdate);
-  };
-}, [attacker.id, attacker.defense, defender.username, dispatch]);
+    s.on("fightRequested", handleFightRequested);
+    s.on("receiveAttack", handleReceiveAttack);
+    s.on("receiveHeal", handleReceiveHeal);
+    s.on("attackConfirmed", handleAttackConfirmed);
+    s.on("manualHealConfirmed", handleManualHealConfirmed);
+    s.on("opponentHealed", handleOpponentHealed);
+    s.on("combatOver", handleCombatOver);
+    s.on("combatStateUpdate", handleCombatStateUpdate);
 
-
+    return () => {
+      s.off("fightRequested", handleFightRequested);
+      s.off("receiveAttack", handleReceiveAttack);
+      s.off("receiveHeal", handleReceiveHeal);
+      s.off("attackConfirmed", handleAttackConfirmed);
+      s.off("manualHealConfirmed", handleManualHealConfirmed);
+      s.off("opponentHealed", handleOpponentHealed);
+      s.off("combatOver", handleCombatOver);
+      s.off("combatStateUpdate", handleCombatStateUpdate);
+    };
+  }, [attacker.id, attacker.defense, defender.username, dispatch]);
 
   const handleAttack = async () => {
     if (defenderHealth <= 0) {

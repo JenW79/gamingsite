@@ -44,6 +44,8 @@ router.post("/attack", requireAuth, async (req, res) => {
         .status(400)
         .json({ message: "This player is already defeated!" });
 
+    const io = req.app.get("io"); // ✅ move this up here
+
     // Damage calculation
     const baseDamage = 1;
     const statDifference = Math.floor((attacker.attack - defender.defense) / 3);
@@ -164,7 +166,7 @@ router.post("/attack", requireAuth, async (req, res) => {
 
       await combat.save();
 
-      const io = req.app.get("io");
+      //  Emit combatOver
       io.to(`user:${winner.id}`).emit("combatOver", {
         winnerId: winner.id,
         loserId: loser.id,
@@ -176,18 +178,20 @@ router.post("/attack", requireAuth, async (req, res) => {
         loserId: loser.id,
         wasDefeated: true,
       });
-      io.to(`user:${attackerId}`).emit("combatStateUpdate", {
-        attackerId: attacker.id,
-        attackerHP: attacker.health,
-        defenderId: defender.id,
-        defenderHP: defender.health,
+
+      //  Emit updated state for both
+      io.to(`user:${winner.id}`).emit("combatStateUpdate", {
+        attackerId: winner.id,
+        attackerHP: winner.health,
+        defenderId: null,
+        defenderHP: null,
       });
 
-      io.to(`user:${defenderId}`).emit("combatStateUpdate", {
-        attackerId: attacker.id,
-        attackerHP: attacker.health,
-        defenderId: defender.id,
-        defenderHP: defender.health,
+      io.to(`user:${loser.id}`).emit("combatStateUpdate", {
+        attackerId: loser.id,
+        attackerHP: loser.health,
+        defenderId: null,
+        defenderHP: null,
       });
     }
 
@@ -212,6 +216,7 @@ router.post("/attack", requireAuth, async (req, res) => {
       .json({ message: "An error occurred during combat." });
   }
 });
+
 
 // -----------------------------------
 // Resume fight if in progress
@@ -275,6 +280,14 @@ router.post("/manual-heal", requireAuth, async (req, res) => {
 
     user.health = Math.min(user.health + healAmount, maxHealth);
     await user.save();
+
+    const io = req.app.get("io");
+    io.to(`user:${user.id}`).emit("combatStateUpdate", {
+      attackerId: user.id,
+      attackerHP: user.health,
+      defenderId: null,
+      defenderHP: null,
+    });
 
     const combat = await Combat.findOne({
       where: {
