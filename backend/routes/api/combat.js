@@ -19,9 +19,6 @@ router.post("/turn-end", requireAuth, async (req, res) => {
   }
 });
 
-// -----------------------------------
-// Persistent combat attack
-// -----------------------------------
 router.post("/attack", requireAuth, async (req, res) => {
   try {
     const attackerId = req.user.id;
@@ -44,19 +41,16 @@ router.post("/attack", requireAuth, async (req, res) => {
         .status(400)
         .json({ message: "This player is already defeated!" });
 
-    const io = req.app.get("io"); // ✅ move this up here
+    const io = req.app.get("io");
 
-    // Damage calculation
     const baseDamage = 1;
     const statDifference = Math.floor((attacker.attack - defender.defense) / 3);
     const randomBonus = Math.floor(Math.random() * 2);
     const damage = Math.max(baseDamage, statDifference + randomBonus);
 
-    // Update defender health
     defender.health = Math.max(0, defender.health - damage);
     await defender.save();
 
-    // Find or create combat
     let combat = await Combat.findOne({
       where: {
         completed: false,
@@ -80,7 +74,6 @@ router.post("/attack", requireAuth, async (req, res) => {
       });
     }
 
-    // Update combat state
     combat.defenderHP = defender.health;
     combat.log = [
       ...(combat.log || []),
@@ -92,7 +85,6 @@ router.post("/attack", requireAuth, async (req, res) => {
       },
     ];
 
-    // Determine if someone won
     let winner = null;
     let loser = null;
 
@@ -110,7 +102,6 @@ router.post("/attack", requireAuth, async (req, res) => {
       winner.wins += 1;
       loser.losses += 1;
 
-      // XP and level-up for winner ONLY
       winner.experience += 15;
 
       let leveledUp = false;
@@ -166,7 +157,21 @@ router.post("/attack", requireAuth, async (req, res) => {
 
       await combat.save();
 
-      //  Emit combatOver
+      //  Emit final authoritative state
+      io.to(`user:${winner.id}`).emit("combatStateUpdate", {
+        attackerId: winner.id,
+        attackerHP: winner.health,
+        defenderId: loser.id,
+        defenderHP: loser.health,
+      });
+
+      io.to(`user:${loser.id}`).emit("combatStateUpdate", {
+        attackerId: winner.id,
+        attackerHP: winner.health,
+        defenderId: loser.id,
+        defenderHP: loser.health,
+      });
+
       io.to(`user:${winner.id}`).emit("combatOver", {
         winnerId: winner.id,
         loserId: loser.id,
@@ -178,21 +183,23 @@ router.post("/attack", requireAuth, async (req, res) => {
         loserId: loser.id,
         wasDefeated: true,
       });
-
-      //  Emit updated state for both
-      io.to(`user:${winner.id}`).emit("combatStateUpdate", {
-        attackerId: winner.id,
-        attackerHP: winner.health,
-        defenderId: null,
-        defenderHP: null,
+    } else {
+      // Emit interim HP sync if no winner yet
+      io.to(`user:${attacker.id}`).emit("combatStateUpdate", {
+        attackerId: attacker.id,
+        attackerHP: attacker.health,
+        defenderId: defender.id,
+        defenderHP: defender.health,
       });
 
-      io.to(`user:${loser.id}`).emit("combatStateUpdate", {
-        attackerId: loser.id,
-        attackerHP: loser.health,
-        defenderId: null,
-        defenderHP: null,
+      io.to(`user:${defender.id}`).emit("combatStateUpdate", {
+        attackerId: attacker.id,
+        attackerHP: attacker.health,
+        defenderId: defender.id,
+        defenderHP: defender.health,
       });
+
+      await combat.save();
     }
 
     return res.json({
@@ -217,10 +224,6 @@ router.post("/attack", requireAuth, async (req, res) => {
   }
 });
 
-
-// -----------------------------------
-// Resume fight if in progress
-// -----------------------------------
 router.get("/:userId", async (req, res) => {
   const { userId } = req.params;
 
@@ -272,7 +275,7 @@ router.get("/:userId", async (req, res) => {
 router.post("/manual-heal", requireAuth, async (req, res) => {
   try {
     const userId = req.user.id;
-    const healAmount = 10; // base recovery
+    const healAmount = 5;
     const maxHealth = 100;
 
     const user = await User.findByPk(userId);
@@ -281,14 +284,6 @@ router.post("/manual-heal", requireAuth, async (req, res) => {
     user.health = Math.min(user.health + healAmount, maxHealth);
     await user.save();
 
-    const io = req.app.get("io");
-    io.to(`user:${user.id}`).emit("combatStateUpdate", {
-      attackerId: user.id,
-      attackerHP: user.health,
-      defenderId: null,
-      defenderHP: null,
-    });
-
     const combat = await Combat.findOne({
       where: {
         completed: false,
@@ -296,8 +291,9 @@ router.post("/manual-heal", requireAuth, async (req, res) => {
       },
     });
 
+    const io = req.app.get("io");
+
     if (combat) {
-      // Update combat state
       if (combat.attackerId === userId) {
         combat.attackerHP = user.health;
       } else {
@@ -312,6 +308,32 @@ router.post("/manual-heal", requireAuth, async (req, res) => {
       });
 
       await combat.save();
+
+      const opponentId =
+        combat.attackerId === userId ? combat.defenderId : combat.attackerId;
+      const opponentHP =
+        combat.attackerId === userId ? combat.defenderHP : combat.attackerHP;
+
+      io.to(`user:${userId}`).emit("combatStateUpdate", {
+        attackerId: userId,
+        attackerHP: user.health,
+        defenderId: opponentId,
+        defenderHP: opponentHP,
+      });
+
+      io.to(`user:${opponentId}`).emit("combatStateUpdate", {
+        attackerId: userId,
+        attackerHP: user.health,
+        defenderId: opponentId,
+        defenderHP: opponentHP,
+      });
+    } else {
+      io.to(`user:${userId}`).emit("combatStateUpdate", {
+        attackerId: userId,
+        attackerHP: user.health,
+        defenderId: null,
+        defenderHP: null,
+      });
     }
 
     return res.json({
@@ -359,13 +381,13 @@ router.post("/use-item", requireAuth, async (req, res) => {
       },
     });
 
+    const io = req.app.get("io");
     const now = new Date().toISOString();
     let actionMessage = "";
 
     // OUT-OF-COMBAT HEALING SUPPORT
     if (!combat && item.type === "potion") {
       const healed = item.healAmount;
-      const prevHealth = user.health;
       user.health = Math.min(user.health + healed, 100);
       await user.save();
 
@@ -375,6 +397,13 @@ router.post("/use-item", requireAuth, async (req, res) => {
       } else {
         await item.destroy();
       }
+
+      io.to(`user:${user.id}`).emit("combatStateUpdate", {
+        attackerId: user.id,
+        attackerHP: user.health,
+        defenderId: null,
+        defenderHP: null,
+      });
 
       return res.json({
         message: `You used ${item.name} and healed ${healed} HP (out of combat).`,
@@ -386,7 +415,7 @@ router.post("/use-item", requireAuth, async (req, res) => {
       return res.status(404).json({ message: "No active combat found." });
     }
 
-    //  Healing in combat
+    // In-combat healing
     if (item.type === "potion") {
       const healed = item.healAmount;
       const prevHealth = user.health;
@@ -408,7 +437,8 @@ router.post("/use-item", requireAuth, async (req, res) => {
 
       actionMessage = `You used ${item.name} and healed ${healed} HP.`;
     }
-    //  Damage items
+
+    // In-combat damage item
     else if (item.damage > 0) {
       const prevHealth = target.health;
       target.health = Math.max(0, target.health - item.damage);
@@ -430,7 +460,7 @@ router.post("/use-item", requireAuth, async (req, res) => {
 
       actionMessage = `You used ${item.name} and dealt ${item.damage} damage.`;
     }
-    //  Unsupported item
+
     else {
       return res
         .status(400)
@@ -447,11 +477,31 @@ router.post("/use-item", requireAuth, async (req, res) => {
 
     await combat.save();
 
+    const attackerId = combat.attackerId;
+    const defenderId = combat.defenderId;
+    const attackerHP = combat.attackerHP;
+    const defenderHP = combat.defenderHP;
+
+    io.to(`user:${attackerId}`).emit("combatStateUpdate", {
+      attackerId,
+      attackerHP,
+      defenderId,
+      defenderHP,
+    });
+
+    io.to(`user:${defenderId}`).emit("combatStateUpdate", {
+      attackerId,
+      attackerHP,
+      defenderId,
+      defenderHP,
+    });
+
     return res.json({ message: actionMessage, updatedCombat: combat });
   } catch (error) {
     console.error("Item Use Error:", error);
     res.status(500).json({ message: "Error using item." });
   }
 });
+
 
 module.exports = router;

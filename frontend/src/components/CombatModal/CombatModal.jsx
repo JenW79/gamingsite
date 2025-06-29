@@ -127,30 +127,7 @@ export default function CombatModal({
     const handleFightRequested = ({ attackerId }) =>
       log(`Player ${attackerId} started a fight!`);
 
-    const handleReceiveAttack = ({ damage, attackerId }) => {
-      const effectiveDefense = attacker.defense ?? 0;
-      const mitigated = damage - effectiveDefense * 0.2;
-      const finalDamage = Math.max(1, Math.floor(mitigated));
-      setAttackerHealth((hp) => Math.max(0, hp - finalDamage));
-      log(`You took ${finalDamage} damage from Player ${attackerId}`);
-    };
-
     const handleReceiveHeal = ({ healAmount }) => {
-      setDefenderHealth((hp) => Math.min(100, hp + healAmount));
-      log(`Opponent healed for ${healAmount} HP.`);
-    };
-
-    const handleAttackConfirmed = ({ damage }) => {
-      setDefenderHealth((hp) => Math.max(0, hp - damage));
-      log(`You dealt ${damage} damage to ${defender.username}`);
-    };
-
-    const handleManualHealConfirmed = ({ healAmount }) => {
-      setAttackerHealth((hp) => Math.min(100, hp + healAmount));
-      log(`You successfully recovered ${healAmount} HP.`);
-    };
-
-    const handleOpponentHealed = ({ healAmount }) => {
       setDefenderHealth((hp) => Math.min(100, hp + healAmount));
       log(`Opponent healed for ${healAmount} HP.`);
     };
@@ -182,12 +159,11 @@ export default function CombatModal({
         return;
       }
 
-      // In-combat updates
       if (attacker.id === socketAttackerId) {
         setAttackerHealth(attackerHP);
         setDefenderHealth(defenderHP);
       } else {
-        setAttackerHealth(defenderHP); // flipped for defender's view
+        setAttackerHealth(defenderHP);
         setDefenderHealth(attackerHP);
       }
 
@@ -195,21 +171,13 @@ export default function CombatModal({
     };
 
     s.on("fightRequested", handleFightRequested);
-    s.on("receiveAttack", handleReceiveAttack);
     s.on("receiveHeal", handleReceiveHeal);
-    s.on("attackConfirmed", handleAttackConfirmed);
-    s.on("manualHealConfirmed", handleManualHealConfirmed);
-    s.on("opponentHealed", handleOpponentHealed);
     s.on("combatOver", handleCombatOver);
     s.on("combatStateUpdate", handleCombatStateUpdate);
 
     return () => {
       s.off("fightRequested", handleFightRequested);
-      s.off("receiveAttack", handleReceiveAttack);
       s.off("receiveHeal", handleReceiveHeal);
-      s.off("attackConfirmed", handleAttackConfirmed);
-      s.off("manualHealConfirmed", handleManualHealConfirmed);
-      s.off("opponentHealed", handleOpponentHealed);
       s.off("combatOver", handleCombatOver);
       s.off("combatStateUpdate", handleCombatStateUpdate);
     };
@@ -248,11 +216,9 @@ export default function CombatModal({
         setDefenderHealth(data.defenderHealth);
         log(data.message);
 
-        // ✅ Immediately check if defeated (even if server lags on `combatCompleted`)
         if (data.defenderHealth <= 0) {
           log(`💥 ${defender.username} has been defeated!`);
 
-          // force fetch game data update
           setTimeout(() => {
             dispatch(fetchGameData(attacker.id));
           }, 500);
