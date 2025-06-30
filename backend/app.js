@@ -155,4 +155,6 @@ app.use((err, _req, res, _next) => {
   });
 });
 
+app.set("io", null); // default value to be overridden by server.js
+
 module.exports = app;
