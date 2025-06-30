@@ -2,8 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchGameData } from "../../store/game";
 import { csrfFetch } from "../../store/csrf";
+import { initSocket } from "../../socket";
 import "./CombatModal.css";
-import io from "socket.io-client";
 
 export default function CombatModal({
   attacker,
@@ -18,36 +18,24 @@ export default function CombatModal({
   const [xpThresholds, setXpThresholds] = useState([]);
   const gameStats = useSelector((state) => state.game.stats);
   const logRef = useRef(null);
+  const socket = useRef(null);
 
   const MAX_LOG_ENTRIES = 20;
 
   const log = (entry) => {
     setCombatLog((prev) => {
       const updated = [...prev, entry].slice(-MAX_LOG_ENTRIES);
-
-      // auto-scroll after state updates (next tick)
       setTimeout(() => {
         if (logRef.current) {
           logRef.current.scrollTop = logRef.current.scrollHeight;
         }
       }, 0);
-
       return updated;
     });
   };
 
-  const socket = useRef(null);
-
   useEffect(() => {
-    socket.current = io(
-      import.meta.env.VITE_SOCKET_URL || "http://localhost:8000",
-      {
-        withCredentials: true,
-        transports: ["websocket"],
-      }
-    );
-
-    socket.current.emit("register", attacker.id);
+    socket.current = initSocket(attacker.id);
 
     const fightId = `${attacker.id}-${defender.id}-${Date.now()}`;
     socket.current.emit("startFight", {
@@ -57,10 +45,6 @@ export default function CombatModal({
     });
 
     log(`Engaged combat with ${defender.username}!`);
-
-    return () => {
-      socket.current?.disconnect();
-    };
   }, [attacker.id, defender.id, defender.username]);
 
   useEffect(() => {
@@ -108,10 +92,7 @@ export default function CombatModal({
             log(`${profileData.username} is already defeated.`);
           }
         } catch (fallbackErr) {
-          console.error(
-            "Failed to load fallback defender profile:",
-            fallbackErr
-          );
+          console.error("Failed to load fallback defender profile:", fallbackErr);
           setDefenderHealth(100);
         }
       }
@@ -134,9 +115,7 @@ export default function CombatModal({
 
     const handleCombatOver = ({ winnerId, rewards }) => {
       if (attacker.id === winnerId) {
-        alert(
-          `🏆 You won the battle! +${rewards.xp} XP, +${rewards.coins} coins`
-        );
+        alert(`🏆 You won the battle! +${rewards.xp} XP, +${rewards.coins} coins`);
       } else {
         log("💀 You were defeated.");
       }
@@ -151,7 +130,6 @@ export default function CombatModal({
       defenderHP,
     }) => {
       if (socketDefenderId === null) {
-        // Manual heal outside combat
         if (attacker.id === socketAttackerId) {
           setAttackerHealth(attackerHP);
           dispatch(fetchGameData(attacker.id));

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import io from "socket.io-client";
+import { initSocket, getSocket, disconnectSocket } from "../../socket";
 import ProfileModal from "../ProfileModal/ProfileModal";
 import { fetchProfiles } from "../../store/profiles";
 import { FaUserCircle } from "react-icons/fa";
@@ -11,66 +11,36 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [modalUser, setModalUser] = useState(null);
   const messagesEndRef = useRef(null);
-  const socket = useRef(null);
   const dispatch = useDispatch();
 
   const user = useSelector((state) => state.session.user);
   const profiles = useSelector((state) => state.profiles.list);
 
-  // Fetch profiles on mount
   useEffect(() => {
     dispatch(fetchProfiles());
   }, [dispatch]);
 
-  // Setup socket connection
   useEffect(() => {
     if (!user) return;
 
-    if (!socket.current || !socket.current.connected) {
-      socket.current = io(
-        import.meta.env.VITE_SOCKET_URL || "http://localhost:8000",
-        {
-          withCredentials: true,
-          transports: ["websocket"],
-        }
-      );
+    const socket = initSocket(user.id);
 
-      console.log(
-        "🧪 VITE_SOCKET_URL at runtime:",
-        import.meta.env.VITE_SOCKET_URL
-      );
+    socket.on("chat history", (history) => setMessages(history));
+    socket.on("chat message", (msg) => setMessages((prev) => [...prev, msg]));
 
-      socket.current.on("connect", () => {
-        console.log("✅ Socket connected:", socket.current.id);
-        socket.current.emit("register", user.id);
-      });
-
-      socket.current.on("chat history", (history) => {
-        setMessages(history);
-      });
-
-      socket.current.on("chat message", (msg) => {
-        setMessages((prev) => [...prev, msg]);
-      });
-    }
-
-    return () => {
-      socket.current?.disconnect();
-      socket.current = null;
-    };
+    return () => disconnectSocket();
   }, [user]);
 
-  // Auto-scroll chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!input.trim()) return;
 
-    socket.current?.emit("chat message", {
+    const socket = getSocket();
+    socket?.emit("chat message", {
       text: input,
       username: user?.username || "Guest",
       avatarUrl: user?.avatarUrl || null,
@@ -84,7 +54,6 @@ export default function ChatPage() {
       profiles.find((p) => p.username === msg.username) ||
       (user?.username === msg.username ? user : null);
 
-    // Runtime fallback fetch if not found in Redux
     if (!match && msg.username) {
       try {
         const res = await fetch(`/api/profiles/username/${msg.username}`);

@@ -4,7 +4,7 @@ const { Message, DirectMessage, User } = require("./db/models");
 const onlineUsers = {};
 
 function setupSockets(server) {
-  console.log("🛠️ Setting up sockets..."); 
+  console.log("🛠️ Setting up sockets...");
   const io = new Server(server, {
     cors: {
       origin: process.env.FRONTEND_URL || "http://localhost:5173",
@@ -63,6 +63,9 @@ function setupSockets(server) {
 
     // 🔹 User Registration (for combat & DMs)
     socket.on("register", (userId) => {
+      if (onlineUsers[userId] && onlineUsers[userId] !== socket.id) {
+        console.log(`🔄 Replacing old socket for user ${userId}`);
+      }
       onlineUsers[userId] = socket.id;
       socket.join(`user:${userId}`); // Join a room for private messages
       console.log(`🧩 Registered user ${userId} on socket ${socket.id}`);
@@ -70,7 +73,12 @@ function setupSockets(server) {
 
     // 🔹 Direct Messages
     socket.on("private message", async ({ senderId, receiverId, text }) => {
-      const msg = await DirectMessage.create({ senderId, receiverId, text, isRead: false });
+      const msg = await DirectMessage.create({
+        senderId,
+        receiverId,
+        text,
+        isRead: false,
+      });
 
       // Fetch full message with Sender and Receiver info
       const fullMsg = await DirectMessage.findByPk(msg.id, {

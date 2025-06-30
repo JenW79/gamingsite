@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import io from "socket.io-client";
+import { initSocket, disconnectSocket } from "../../socket";
 import ProfileModal from "../ProfileModal/ProfileModal";
 import "./DMpage.css";
 
@@ -28,21 +28,10 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
 
   useEffect(() => {
     if (currentUser) {
-      socket.current = io(
-        import.meta.env.VITE_SOCKET_URL || "http://localhost:8000",
-        {
-          withCredentials: true,
-          transports: ["websocket"],
-        }
-      );
-
-      socket.current.on("connect", () => {
-        socket.current.emit("register", currentUser.id);
-      });
+      socket.current = initSocket(currentUser.id);
     }
-
     return () => {
-      socket.current?.disconnect();
+      disconnectSocket();
     };
   }, [currentUser]);
 
@@ -50,19 +39,10 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
     if (!socket.current) return;
 
     const handleMessage = (msg) => {
-      console.log("📩 Received private message via socket:", msg);
-      const otherUser =
-        msg.senderId === currentUser.id
-          ? msg.Receiver ?? {
-              id: msg.receiverId,
-              username: "Unknown",
-              avatarUrl: null,
-            }
-          : msg.Sender ?? {
-              id: msg.senderId,
-              username: "Unknown",
-              avatarUrl: null,
-            };
+      const isRecipient = msg.receiverId === currentUser.id;
+      const otherUser = isRecipient
+        ? msg.Sender || { id: msg.senderId, username: "Unknown", avatarUrl: null }
+        : msg.Receiver || { id: msg.receiverId, username: "Unknown", avatarUrl: null };
 
       const isActive =
         activeUserId &&
@@ -72,16 +52,18 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
         const exists = prev.find((c) => c.otherUser.id === otherUser.id);
         if (exists) {
           return prev.map((c) =>
-            c.otherUser.id === otherUser.id
-              ? { ...msg, otherUser, text: msg.text }
-              : c
+            c.otherUser.id === otherUser.id ? { ...msg, otherUser, text: msg.text } : c
           );
         }
         return [{ ...msg, otherUser, text: msg.text }, ...prev];
       });
 
-      if (isActive) console.log("📥 Appending received message to chat");
-      setMessages((prev) => [...prev, msg]);
+      if (isActive) {
+        setMessages((prev) => [...prev, msg]);
+      } else if (isRecipient) {
+        // Show new message notification logic here for recipient only
+        window.__newDMReceived = true;
+      }
     };
 
     socket.current.on("private message", handleMessage);
@@ -145,8 +127,6 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
       text: newMessage,
     };
 
-    console.log("📤 handleSend emitting message:", msgToSend);
-
     socket.current.emit("private message", msgToSend);
     setNewMessage("");
 
@@ -155,6 +135,7 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
       fromUserId: currentUser.id,
     });
   };
+
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
     if (!typing) {
@@ -353,3 +334,4 @@ export default function DMModal({ showDM, handleClose, initialUserId = null }) {
     </div>
   );
 }
+
