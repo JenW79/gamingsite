@@ -42,6 +42,7 @@ router.post("/attack", requireAuth, async (req, res) => {
         .json({ message: "This player is already defeated!" });
 
     const io = req.app.get("io");
+    if (!io) console.warn("⚠️ io is undefined — skipping socket emits.");
 
     const baseDamage = 1;
     const statDifference = Math.floor((attacker.attack - defender.defense) / 3);
@@ -75,15 +76,12 @@ router.post("/attack", requireAuth, async (req, res) => {
     }
 
     combat.defenderHP = defender.health;
-    combat.log = [
-      ...(combat.log || []),
-      {
-        turn: new Date().toISOString(),
-        action: "attack",
-        attacker: attacker.username,
-        damage,
-      },
-    ];
+    combat.log.push({
+      turn: new Date().toISOString(),
+      action: "attack",
+      attacker: attacker.username,
+      damage,
+    });
 
     let winner = null;
     let loser = null;
@@ -157,49 +155,51 @@ router.post("/attack", requireAuth, async (req, res) => {
 
       await combat.save();
 
-      //  Emit final authoritative state
-      io.to(`user:${winner.id}`).emit("combatStateUpdate", {
-        attackerId: winner.id,
-        attackerHP: winner.health,
-        defenderId: loser.id,
-        defenderHP: loser.health,
-      });
+      if (io) {
+        io.to(`user:${winner.id}`).emit("combatStateUpdate", {
+          attackerId: winner.id,
+          attackerHP: winner.health,
+          defenderId: loser.id,
+          defenderHP: loser.health,
+        });
 
-      io.to(`user:${loser.id}`).emit("combatStateUpdate", {
-        attackerId: winner.id,
-        attackerHP: winner.health,
-        defenderId: loser.id,
-        defenderHP: loser.health,
-      });
+        io.to(`user:${loser.id}`).emit("combatStateUpdate", {
+          attackerId: winner.id,
+          attackerHP: winner.health,
+          defenderId: loser.id,
+          defenderHP: loser.health,
+        });
 
-      io.to(`user:${winner.id}`).emit("combatOver", {
-        winnerId: winner.id,
-        loserId: loser.id,
-        rewards: { xp: 15, coins: 1 },
-      });
+        io.to(`user:${winner.id}`).emit("combatOver", {
+          winnerId: winner.id,
+          loserId: loser.id,
+          rewards: { xp: 15, coins: 1 },
+        });
 
-      io.to(`user:${loser.id}`).emit("combatOver", {
-        winnerId: winner.id,
-        loserId: loser.id,
-        wasDefeated: true,
-      });
+        io.to(`user:${loser.id}`).emit("combatOver", {
+          winnerId: winner.id,
+          loserId: loser.id,
+          wasDefeated: true,
+        });
+      }
     } else {
-      // Emit interim HP sync if no winner yet
-      io.to(`user:${attacker.id}`).emit("combatStateUpdate", {
-        attackerId: attacker.id,
-        attackerHP: attacker.health,
-        defenderId: defender.id,
-        defenderHP: defender.health,
-      });
-
-      io.to(`user:${defender.id}`).emit("combatStateUpdate", {
-        attackerId: attacker.id,
-        attackerHP: attacker.health,
-        defenderId: defender.id,
-        defenderHP: defender.health,
-      });
-
       await combat.save();
+
+      if (io) {
+        io.to(`user:${attacker.id}`).emit("combatStateUpdate", {
+          attackerId: attacker.id,
+          attackerHP: attacker.health,
+          defenderId: defender.id,
+          defenderHP: defender.health,
+        });
+
+        io.to(`user:${defender.id}`).emit("combatStateUpdate", {
+          attackerId: attacker.id,
+          attackerHP: attacker.health,
+          defenderId: defender.id,
+          defenderHP: defender.health,
+        });
+      }
     }
 
     return res.json({
@@ -391,6 +391,9 @@ router.post("/use-item", requireAuth, async (req, res) => {
     });
 
     const io = req.app.get("io");
+    if (!io) {
+      console.warn("⚠️ io is undefined — skipping socket emits.");
+    }
     const now = new Date().toISOString();
     let actionMessage = "";
 
@@ -407,12 +410,14 @@ router.post("/use-item", requireAuth, async (req, res) => {
         await item.destroy();
       }
 
-      io.to(`user:${user.id}`).emit("combatStateUpdate", {
-        attackerId: user.id,
-        attackerHP: user.health,
-        defenderId: null,
-        defenderHP: null,
-      });
+      if (io) {
+        io.to(`user:${user.id}`).emit("combatStateUpdate", {
+          attackerId: user.id,
+          attackerHP: user.health,
+          defenderId: null,
+          defenderHP: null,
+        });
+      }
 
       return res.json({
         message: `You used ${item.name} and healed ${healed} HP (out of combat).`,
@@ -489,19 +494,21 @@ router.post("/use-item", requireAuth, async (req, res) => {
     const attackerHP = combat.attackerHP;
     const defenderHP = combat.defenderHP;
 
-    io.to(`user:${attackerId}`).emit("combatStateUpdate", {
-      attackerId,
-      attackerHP,
-      defenderId,
-      defenderHP,
-    });
+    if (io) {
+      io.to(`user:${attackerId}`).emit("combatStateUpdate", {
+        attackerId,
+        attackerHP,
+        defenderId,
+        defenderHP,
+      });
 
-    io.to(`user:${defenderId}`).emit("combatStateUpdate", {
-      attackerId,
-      attackerHP,
-      defenderId,
-      defenderHP,
-    });
+      io.to(`user:${defenderId}`).emit("combatStateUpdate", {
+        attackerId,
+        attackerHP,
+        defenderId,
+        defenderHP,
+      });
+    }
 
     return res.json({ message: actionMessage, updatedCombat: combat });
   } catch (error) {

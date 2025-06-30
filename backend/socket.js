@@ -4,6 +4,7 @@ const { Message, DirectMessage, User } = require("./db/models");
 const onlineUsers = {};
 
 function setupSockets(server) {
+  console.log("🛠️ Setting up sockets..."); 
   const io = new Server(server, {
     cors: {
       origin: process.env.FRONTEND_URL || "http://localhost:5173",
@@ -12,7 +13,7 @@ function setupSockets(server) {
   });
 
   io.on("connection", async (socket) => {
-    console.log("🟢 User connected:", socket.id);
+    console.log("User connected:", socket.id);
 
     // 🔹 Lobby Chat
     const recentMessages = await Message.findAll({
