@@ -293,6 +293,14 @@ router.post("/manual-heal", requireAuth, async (req, res) => {
 
     const io = req.app.get("io");
 
+    if (!io) {
+      console.warn("⚠️ io is undefined — skipping socket emits.");
+      return res.status(200).json({
+        message: `You recovered ${healAmount} HP! (socket not emitted)`,
+        newHealth: user.health,
+      });
+    }
+
     if (combat) {
       if (combat.attackerId === userId) {
         combat.attackerHP = user.health;
@@ -328,8 +336,9 @@ router.post("/manual-heal", requireAuth, async (req, res) => {
         defenderHP: opponentHP,
       });
     } else {
+      // Solo heal
       io.to(`user:${userId}`).emit("combatStateUpdate", {
-        attackerId: userId,
+        attackerId: user.id,
         attackerHP: user.health,
         defenderId: null,
         defenderHP: null,
@@ -459,9 +468,7 @@ router.post("/use-item", requireAuth, async (req, res) => {
       else combat.defenderHP = target.health;
 
       actionMessage = `You used ${item.name} and dealt ${item.damage} damage.`;
-    }
-
-    else {
+    } else {
       return res
         .status(400)
         .json({ message: "This item cannot be used in combat." });
@@ -502,6 +509,5 @@ router.post("/use-item", requireAuth, async (req, res) => {
     res.status(500).json({ message: "Error using item." });
   }
 });
-
 
 module.exports = router;
