@@ -16,6 +16,7 @@ export default function CombatModal({
   const [attackerHealth, setAttackerHealth] = useState(100);
   const [defenderHealth, setDefenderHealth] = useState(100);
   const [xpThresholds, setXpThresholds] = useState([]);
+  const [isAttacking, setIsAttacking] = useState(false);
   const gameStats = useSelector((state) => state.game.stats);
   const logRef = useRef(null);
   const socket = useRef(null);
@@ -118,7 +119,9 @@ export default function CombatModal({
       log(`Player ${attackerId} started a fight!`);
 
     const handleReceiveHeal = ({ healAmount }) => {
-      setDefenderHealth((hp) => Math.min(100, hp + healAmount));
+      setDefenderHealth((hp) =>
+        Math.min(defender.maxHealth ?? 100, hp + healAmount)
+      );
       log(`Opponent healed for ${healAmount} HP.`);
     };
 
@@ -151,7 +154,7 @@ export default function CombatModal({
       if (attacker.id === socketAttackerId) {
         setAttackerHealth(attackerHP);
         setDefenderHealth(defenderHP);
-      } else {
+      } else if (attacker.id === socketDefenderId) {
         setAttackerHealth(defenderHP);
         setDefenderHealth(attackerHP);
       }
@@ -173,15 +176,12 @@ export default function CombatModal({
   }, [attacker.id, attacker.defense, defender.username, dispatch]);
 
   const handleAttack = async () => {
-    if (defenderHealth <= 0) {
-      log(`${defender.username} is already defeated.`);
-      return;
-    }
-
     if (attackerHealth <= 0) {
       log("You're too weak to fight!");
       return;
     }
+    if (isAttacking) return;
+    setIsAttacking(true);
 
     const baseDamage = attacker.attack ?? 5;
     const defense = defender.defense ?? 0;
@@ -196,10 +196,6 @@ export default function CombatModal({
       });
 
       const data = await response.json();
-      if (data.defenderHealth !== undefined) {
-        setDefenderHealth(data.defenderHealth);
-        log(data.message);
-      }
 
       if (data.defenderHealth !== undefined) {
         setDefenderHealth(data.defenderHealth);
@@ -221,17 +217,20 @@ export default function CombatModal({
           }
         }
       }
-
+      
       socket.current.emit("attackMove", {
         attackerId: attacker.id,
         defenderId: defender.id,
         damage,
       });
     } catch (error) {
-      const errData = await error.json();
-      const fallback = "Attack failed.";
-      log(errData.message || fallback);
+      const errData = await error.json?.();
+      if (errData?.message?.includes("defeated")) {
+        setDefenderHealth(0);
+      }
+      log(errData?.message || "Attack failed.");
     }
+    setIsAttacking(false);
   };
 
   const handleManualHeal = async () => {
@@ -333,7 +332,7 @@ export default function CombatModal({
                   />
                 </div>
                 <p>
-                  {p.username}: {hp}/{p.maxHealth || 100} HP
+                  {p.username}: {hp}/{p.maxHealth ?? 100} HP
                 </p>
                 {isAttacker && (
                   <>
@@ -356,7 +355,9 @@ export default function CombatModal({
         <div className="combat-controls">
           <button
             onClick={handleAttack}
-            disabled={attackerHealth === 0 || defenderHealth === 0}
+            disabled={
+              attackerHealth === 0 || defenderHealth === 0 || isAttacking
+            }
           >
             Attack
           </button>
