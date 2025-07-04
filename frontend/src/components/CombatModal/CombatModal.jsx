@@ -81,15 +81,21 @@ export default function CombatModal({
         log("Resumed existing combat.");
       } catch {
         console.log("No active combat found.");
-        setAttackerHealth(attacker.health ?? 100);
+        // Fetch attacker profile
+        const attackerRes = await csrfFetch(`/api/profiles/${attacker.id}`);
+        const attackerData = await attackerRes.json();
+        const attackerHP = attackerData.health ?? 100;
+        setAttackerHealth(attackerHP);
 
+        // Fetch defender profile
         try {
-          const profileRes = await csrfFetch(`/api/profiles/${defender.id}`);
-          const profileData = await profileRes.json();
-          const health = profileData.health ?? 100;
-          setDefenderHealth(health);
-          if (health <= 0) {
-            log(`${profileData.username} is already defeated.`);
+          const defenderRes = await csrfFetch(`/api/profiles/${defender.id}`);
+          const defenderData = await defenderRes.json();
+          const defenderHP = defenderData.health ?? 100;
+          setDefenderHealth(defenderHP);
+
+          if (defenderHP <= 0) {
+            log(`${defenderData.username} is already defeated.`);
           }
         } catch (fallbackErr) {
           console.error(
