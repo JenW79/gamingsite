@@ -89,6 +89,7 @@ function ProfileDetailPage() {
 
       {showCombat && (
         <CombatModal
+          key={`${(attackerProfile || currentUser)?.id}-${profile?.id}`} // force remount per matchup
           attacker={attackerProfile || currentUser}
           defender={profile}
           inventory={inventory}
