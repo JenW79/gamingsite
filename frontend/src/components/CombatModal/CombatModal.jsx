@@ -69,6 +69,10 @@ export default function CombatModal({
 
   useEffect(() => {
     const loadCombat = async () => {
+      // Reset before any fetches
+      setAttackerHealth(100);
+      setDefenderHealth(100);
+      setCombatLog([]);
       try {
         const res = await csrfFetch(`/api/combat/${attacker.id}`);
         const data = await res.json();
@@ -217,7 +221,7 @@ export default function CombatModal({
           }
         }
       }
-      
+
       socket.current.emit("attackMove", {
         attackerId: attacker.id,
         defenderId: defender.id,
