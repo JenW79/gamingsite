@@ -16,6 +16,7 @@ export default function CombatModal({
   const [attackerHealth, setAttackerHealth] = useState(100);
   const [defenderHealth, setDefenderHealth] = useState(100);
   const [xpThresholds, setXpThresholds] = useState([]);
+  const [defenderProfile, setDefenderProfile] = useState(defender);
   const [isAttacking, setIsAttacking] = useState(false);
   const gameStats = useSelector((state) => state.game.stats);
   const logRef = useRef(null);
@@ -97,7 +98,9 @@ export default function CombatModal({
           const defenderRes = await csrfFetch(`/api/profiles/${defender.id}`);
           const defenderData = await defenderRes.json();
           const defenderHP = defenderData.health ?? 100;
+
           setDefenderHealth(defenderHP);
+          setDefenderProfile(defenderData); // store full fresh profile
 
           if (defenderHP <= 0) {
             log(`${defenderData.username} is already defeated.`);
@@ -177,7 +180,13 @@ export default function CombatModal({
       s.off("combatOver", handleCombatOver);
       s.off("combatStateUpdate", handleCombatStateUpdate);
     };
-  }, [attacker.id, attacker.defense, defender.username, defender.maxHealth, dispatch]);
+  }, [
+    attacker.id,
+    attacker.defense,
+    defender.username,
+    defender.maxHealth,
+    dispatch,
+  ]);
 
   const handleAttack = async () => {
     if (attackerHealth <= 0) {
@@ -305,7 +314,7 @@ export default function CombatModal({
         </div>
 
         <div className="combat-bars">
-          {[attacker, defender].map((p, idx) => {
+          {[attacker, defenderProfile].map((p, idx) => {
             const isAttacker = idx === 0;
             const hp = isAttacker ? attackerHealth : defenderHealth;
 
