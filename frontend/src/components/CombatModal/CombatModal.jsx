@@ -92,8 +92,11 @@ export default function CombatModal({
             log(`${profileData.username} is already defeated.`);
           }
         } catch (fallbackErr) {
-          console.error("Failed to load fallback defender profile:", fallbackErr);
-          setDefenderHealth(100);
+          console.error(
+            "Failed to load fallback defender profile:",
+            fallbackErr
+          );
+          setDefenderHealth(0);
         }
       }
     };
@@ -115,7 +118,9 @@ export default function CombatModal({
 
     const handleCombatOver = ({ winnerId, rewards }) => {
       if (attacker.id === winnerId) {
-        alert(`🏆 You won the battle! +${rewards.xp} XP, +${rewards.coins} coins`);
+        alert(
+          `🏆 You won the battle! +${rewards.xp} XP, +${rewards.coins} coins`
+        );
       } else {
         log("💀 You were defeated.");
       }
@@ -316,13 +321,13 @@ export default function CombatModal({
                   <div
                     className="hp-fill"
                     style={{
-                      width: `${hp}%`,
+                      width: `${(hp / (p.maxHealth || 100)) * 100}%`,
                       backgroundColor: hp === 0 ? "crimson" : "limegreen",
                     }}
                   />
                 </div>
                 <p>
-                  {p.username}: {hp}/100 HP
+                  {p.username}: {hp}/{p.maxHealth || 100} HP
                 </p>
                 {isAttacker && (
                   <>
