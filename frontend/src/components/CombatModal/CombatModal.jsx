@@ -177,7 +177,7 @@ export default function CombatModal({
       s.off("combatOver", handleCombatOver);
       s.off("combatStateUpdate", handleCombatStateUpdate);
     };
-  }, [attacker.id, attacker.defense, defender.username, dispatch]);
+  }, [attacker.id, attacker.defense, defender.username, defender.maxHealth, dispatch]);
 
   const handleAttack = async () => {
     if (attackerHealth <= 0) {
